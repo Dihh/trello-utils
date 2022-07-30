@@ -1,4 +1,11 @@
 <script setup lang="ts">
+import { ref, onMounted } from "vue";
+import Menu from "@/components/menu.vue";
+import M from "materialize-css";
+
+onMounted(() => {
+  M.AutoInit();
+});
 </script>
 
 <template>
@@ -10,8 +17,10 @@
       </nav>
     </div>
   </header> -->
-
-  <RouterView />
+  <div class="row">
+    <div class="col s2"><Menu /></div>
+    <div class="col s6"><RouterView /></div>
+  </div>
 </template>
 
 <style scoped>
