@@ -3,6 +3,7 @@ import Cards from '../views/Cards.vue'
 import Checklist from '../views/Checklist.vue'
 import ApiKey from '../views/ApiKey.vue'
 import CreateCards from '@/views/CreateCards.vue'
+import Dashboard from '@/views/Dashboard.vue'
 
 const publicPath = '/trello-utils'
 
@@ -11,6 +12,11 @@ const router = createRouter({
   routes: [
     {
       path: `${publicPath}/`,
+      name: 'dashboard',
+      component: Dashboard
+    },
+    {
+      path: `${publicPath}/cards`,
       name: 'cards',
       component: Cards
     },

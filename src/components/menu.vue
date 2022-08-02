@@ -5,7 +5,7 @@
   <RouterLink class="waves-effect waves-light btn" to="/trello-utils/"
     >Dashboard</RouterLink
   >
-  <RouterLink class="waves-effect waves-light btn" to="/trello-utils/"
+  <RouterLink class="waves-effect waves-light btn" to="/trello-utils/cards"
     >Cards</RouterLink
   >
   <RouterLink

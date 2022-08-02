@@ -4,4 +4,4 @@ import { defineComponent } from "vue";
 export default defineComponent({});
 </script>
 
-<template>component 2</template>
+<template>Dashboard</template>

@@ -179,8 +179,8 @@ export default defineComponent({
   max-height: 30vh;
   overflow-y: auto;
   overflow-x: hidden;
-  border: solid 1px #aaa;
-  padding: 10px;
+  border: solid 1px rgba(170, 170, 170, 0.885);
+  padding: 20px 10px 20px 20px !important;
   border-radius: 9px;
 }
 .labels {
@@ -188,7 +188,7 @@ export default defineComponent({
   overflow-y: auto;
   overflow-x: hidden;
   border: solid 1px #aaa;
-  padding: 10px;
+  padding: 20px 10px 20px 20px !important;
   border-radius: 9px;
 }
 .form-button {
