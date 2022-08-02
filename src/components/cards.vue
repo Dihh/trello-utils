@@ -7,7 +7,7 @@ export default defineComponent({
       cards: [] as any,
       cardsFiltered: [] as any,
       selecteds: [],
-      selectedsCards: [],
+      selectedsCards: [] as any,
       board: localStorage.board,
       apiKey: localStorage.apiKey,
       token: localStorage.token,
@@ -25,7 +25,7 @@ export default defineComponent({
       this.cards = await resp.json();
       this.cardsFilter();
     },
-    send(form: any) {
+    send() {
       event?.preventDefault();
     },
     search() {
