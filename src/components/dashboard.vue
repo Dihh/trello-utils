@@ -9,8 +9,9 @@ const colors = [
   "rgba(54, 162, 235, 0.2)",
   "rgba(255, 206, 86, 0.2)",
   "rgba(54, 162, 235, 0.2)",
-  "rgba(75, 192, 192, 0.9)",
-  "rgba(255, 159, 64, 0.2)",
+  "rgba(75, 192, 192, 1)",
+  "rgba(255, 140, 0, 0.7)",
+  "rgba(255, 0, 0, 0.5)",
 ];
 
 export default defineComponent({
@@ -40,7 +41,16 @@ export default defineComponent({
       chartData: {} as any,
       lists: [] as any,
       cards: [] as any,
-      listsSelecteds: ["Done", "Sexta", "Quinta", "Quarta", "Terça", "Segunda"],
+      listsSelecteds: [
+        "Done",
+        "Sexta",
+        "Quinta",
+        "Quarta",
+        "Terça",
+        "Segunda",
+        "Adiar",
+        "Fail",
+      ],
       dates: [
         "31/07/2022",
         "01/08/2022",
