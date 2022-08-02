@@ -9,17 +9,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <!-- <header>
-    <div class="wrapper">
-      <nav>
-        <RouterLink to="/">Home</RouterLink>
-        <RouterLink to="/about">About</RouterLink>
-      </nav>
-    </div>
-  </header> -->
   <div class="row">
     <div class="col s2"><Menu /></div>
-    <div class="col s6"><RouterView /></div>
+    <div class="col s10"><RouterView /></div>
   </div>
 </template>
 

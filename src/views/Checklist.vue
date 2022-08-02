@@ -1,10 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
 import Checklist from "@/components/checklist.vue";
-
-onMounted(() => {
-  console.log(`The initial count is.`);
-});
 </script>
 
 <template>

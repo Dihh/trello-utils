@@ -1,12 +1,17 @@
-<script setup lang="ts">
-import { ref, onMounted } from "vue";
-
-onMounted(() => {});
+<script lang="ts">
 </script>
 
 <template>
   <RouterLink class="waves-effect waves-light btn" to="/trello-utils/"
+    >Dashboard</RouterLink
+  >
+  <RouterLink class="waves-effect waves-light btn" to="/trello-utils/"
     >Cards</RouterLink
+  >
+  <RouterLink
+    class="waves-effect waves-light btn"
+    to="/trello-utils/create-cards"
+    >Criar cards</RouterLink
   >
   <RouterLink class="waves-effect waves-light btn" to="/trello-utils/checklist"
     >Checklist</RouterLink
