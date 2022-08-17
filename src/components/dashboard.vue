@@ -1,6 +1,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import { Chart, registerables } from "chart.js";
+import M from "materialize-css";
 
 let chart: any = null;
 const colors = [
@@ -43,35 +44,60 @@ export default defineComponent({
       chartData: {} as any,
       lists: [] as any,
       cards: [] as any,
-      listsSelecteds: [
-        "Done",
-        "Sexta",
-        "Quinta",
-        "Quarta",
-        "Terça",
-        "Segunda",
-        "Sábado",
-        "Domingo",
-        "Adiar",
-        "Fail",
-      ],
-      dates: [
-        "14/08/2022",
-        "15/08/2022",
-        "16/08/2022",
-        "17/08/2022",
-        "18/08/2022",
-        "19/08/2022",
-        "20/08/2022",
-        "21/08/2022",
-      ],
+      selectedLists: [] as any,
+      dates: [] as any,
+      view: "dashboard",
+      iintialDayString: "",
+      finalDayString: "",
     };
   },
   mounted() {
+    M.AutoInit();
     Chart.register(...registerables);
+    if (localStorage.dashboardSelectedLists) {
+      this.selectedLists = JSON.parse(localStorage.dashboardSelectedLists);
+    }
+    this.iintialDayString = localStorage.iintialDayString || "";
+    this.finalDayString = localStorage.finalDayString || "";
+    this.getDates();
     this.mountChart();
   },
   methods: {
+    getDates() {
+      const iintialDayString = this.iintialDayString.split("-");
+      const finalDayString = this.finalDayString.split("-");
+
+      const startDate = new Date(
+        Date.UTC(
+          parseInt(iintialDayString[0]),
+          parseInt(iintialDayString[1]) - 1,
+          parseInt(iintialDayString[2])
+        )
+      );
+      let endDate = new Date(
+        Date.UTC(
+          parseInt(finalDayString[0]),
+          parseInt(finalDayString[1]) - 1,
+          parseInt(finalDayString[2])
+        )
+      );
+      endDate = new Date(endDate.setDate(endDate.getDate() + 1));
+      if (startDate < endDate) {
+        let currentDate = startDate;
+        while (currentDate < endDate) {
+          const date = currentDate
+            .toISOString()
+            .split("T")[0]
+            .split("-")
+            .reverse()
+            .join("/");
+          this.dates.push(date);
+          currentDate = new Date(
+            currentDate.setDate(currentDate.getDate() + 1)
+          );
+        }
+      }
+    },
     async update() {
       let chartDatas = localStorage.chartDatas || "{}";
       chartDatas = JSON.parse(chartDatas);
@@ -79,25 +105,26 @@ export default defineComponent({
       await this.getLists();
       await this.getCards();
 
-      let datasets = this.lists.filter((list: any) => {
-        return this.listsSelecteds.includes(list.name);
-      });
+      const today = new Date();
+      const date = new Date(
+        Date.UTC(today.getFullYear(), today.getMonth(), today.getDate())
+      )
+        .toISOString()
+        .split("T")[0]
+        .split("-")
+        .reverse()
+        .join("/");
 
       const chartData = {
-        date: new Date()
-          .toISOString()
-          .split("T")[0]
-          .split("-")
-          .reverse()
-          .join("/"),
+        date,
         data: {},
       } as any;
 
-      datasets.forEach((dataset: any, index: number) => {
+      this.lists.forEach((list: any) => {
         const cardsNumber = this.cards.filter(
-          (card: any) => card.idList == dataset.id
+          (card: any) => card.idList == list.id
         ).length;
-        chartData.data[dataset.name] = cardsNumber;
+        chartData.data[list.name] = cardsNumber;
       });
       chartDatas[chartData.date] = chartData.data;
       localStorage.chartDatas = JSON.stringify(chartDatas);
@@ -121,21 +148,20 @@ export default defineComponent({
 
     async getData() {
       await this.getLists();
-
       let chartDatas = localStorage.chartDatas || "{}";
       chartDatas = JSON.parse(chartDatas);
 
       let datasets = this.lists.filter((list: any) => {
-        return this.listsSelecteds.includes(list.name);
+        return this.selectedLists.includes(list.name);
       });
       datasets = datasets.map((dataset: any, index: number) => {
-        const data = this.dates.map((date) =>
+        const data = this.dates.map((date: any) =>
           chartDatas[date] ? chartDatas[date][dataset.name] : null
         );
         return {
           label: dataset.name,
           data,
-          backgroundColor: colors[index],
+          backgroundColor: colors[index % 10],
           fill: index == 0 ? "start" : "-1",
         };
       });
@@ -159,21 +185,93 @@ export default defineComponent({
       );
       this.cards = await resp.json();
     },
+    chageView(view: string) {
+      this.view = view;
+      this.mountChart();
+    },
+    setLists() {
+      localStorage.dashboardSelectedLists = JSON.stringify(
+        this.selectedLists.map((el: any) => el)
+      );
+    },
+    changeDate() {
+      localStorage.iintialDayString = this.iintialDayString;
+      localStorage.finalDayString = this.finalDayString;
+    },
   },
 });
 </script>
 
 <template>
-  <div class="row">
-    <div class="col s12 right-align">
-      <button class="waves-effect waves-light btn" @click="update">
-        Atualizar
-      </button>
+  <nav class="nav-extended">
+    <div class="nav-content">
+      <ul class="tabs tabs-transparent">
+        <li class="tab">
+          <a href="#test1" @click="chageView('dashboard')">Dashboard</a>
+        </li>
+        <li class="tab">
+          <a href="#test2" @click="chageView('config')">Configuração</a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+  <div v-if="view == 'dashboard'">
+    <div class="row">
+      <div class="col s12 right-align">
+        <button class="waves-effect waves-light btn" @click="update">
+          Atualizar
+        </button>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col s12">
+        <canvas id="myChart"></canvas>
+      </div>
     </div>
   </div>
-  <div class="row">
-    <div class="col s12">
-      <canvas id="myChart"></canvas>
+  <div v-if="view == 'config'">
+    <div class="row">
+      <div class="col s3">
+        <div class="input-field col s11">
+          <input
+            id="initialDate"
+            type="date"
+            v-model="iintialDayString"
+            @change="changeDate()"
+          />
+          <label for="initialDate">Data início</label>
+        </div>
+      </div>
+      <div class="col s3">
+        <div class="input-field col s11">
+          <input
+            id="initialDate"
+            type="date"
+            v-model="finalDayString"
+            @change="changeDate()"
+          />
+          <label for="initialDate">Data fim</label>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col s7 lists">
+        <div class="select-list">
+          <div class="row" v-for="(list, index) in lists" :key="index">
+            <div class="col s12">
+              <label>
+                <input
+                  type="checkbox"
+                  :value="list.name"
+                  @change="setLists()"
+                  v-model="selectedLists"
+                />
+                <span>{{ list.name }}</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -182,5 +280,14 @@ export default defineComponent({
 canvas {
   width: 100% !important;
   height: 400px !important;
+}
+nav {
+  margin-bottom: 20px;
+  background-color: #26a69a;
+}
+.select-list {
+  height: 300px;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 </style>
