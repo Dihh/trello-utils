@@ -1,5 +1,6 @@
 <script lang="ts">
 import { defineComponent } from "vue";
+import { uuid, createCards } from "../utils";
 
 export default defineComponent({
   data() {
@@ -67,26 +68,31 @@ export default defineComponent({
     },
     async send() {
       event?.preventDefault();
-      for (let index in this.selectedsLists) {
-        const list = this.selectedsLists[index];
-        let cardName = this.cardName.replace("{name}", list.name);
-        cardName = cardName.replace("{NAME}", list.name.toUpperCase());
-        const body = new URLSearchParams({
-          name: cardName,
-          idLabels: this.selectedsLabels.map((label: any) => label.id),
-        } as any);
-        const headers = {};
-        await fetch(
-          `https://api.trello.com/1/cards?idList=${list.id}&key=${this.apiKey}&token=${this.token}`,
-          {
-            method: "POST",
-            body: body,
-            headers,
-          }
-        );
-      }
+      await createCards(
+        this.selectedsLists,
+        this.cardName,
+        this.selectedsLabels,
+        this.apiKey,
+        this.token
+      );
       alert("Sucesso");
       this.cardName = "";
+    },
+    saveRecurrents() {
+      const systemRecurrents = localStorage.recurrents || "[]";
+      const recurrents = JSON.parse(systemRecurrents);
+      const recurrent = {
+        id: uuid(),
+        selectedsLists: this.selectedsLists,
+        cardName: this.cardName,
+        selectedsLabels: this.selectedsLabels,
+      };
+      if (recurrent.cardName) {
+        recurrents.push(recurrent);
+        localStorage.recurrents = JSON.stringify(recurrents);
+        alert("Salvo");
+        document.querySelector("form")?.reset();
+      }
     },
   },
 });
@@ -162,8 +168,17 @@ export default defineComponent({
         <input v-model="cardName" id="cardName" type="text" required />
         <label for="cardName"></label>
       </div>
-      <div class="col s2">
+      <div class="col s1">
         <button class="waves-effect waves-light btn">Enviar</button>
+      </div>
+      <div class="col s1">
+        <button
+          type="button"
+          @click="saveRecurrents"
+          class="waves-effect waves-light btn"
+        >
+          Salvar
+        </button>
       </div>
     </div>
   </form>
