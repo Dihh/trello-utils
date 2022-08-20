@@ -49,6 +49,7 @@ export default defineComponent({
       view: "dashboard",
       iintialDayString: "",
       finalDayString: "",
+      chartType: "quantity",
     };
   },
   mounted() {
@@ -124,7 +125,15 @@ export default defineComponent({
         const cardsNumber = this.cards.filter(
           (card: any) => card.idList == list.id
         ).length;
-        chartData.data[list.name] = cardsNumber;
+        const listCards = this.cards.filter(
+          (card: any) => card.idList == list.id
+        );
+        const points = listCards.reduce((a: any, b: any) => {
+          const aPoints = a.points || a;
+          const bPoints = b.points;
+          return aPoints + bPoints;
+        }, 0);
+        chartData.data[list.name] = { cardsNumber, points };
       });
       chartDatas[chartData.date] = chartData.data;
       localStorage.chartDatas = JSON.stringify(chartDatas);
@@ -142,7 +151,6 @@ export default defineComponent({
       };
       const component: any = document.getElementById("myChart");
       const ctx = component.getContext("2d");
-
       chart = new Chart(ctx, chartConfig);
     },
 
@@ -154,9 +162,21 @@ export default defineComponent({
       let datasets = this.lists.filter((list: any) => {
         return this.selectedLists.includes(list.name);
       });
+      let valuesType = "";
+      switch (this.chartType) {
+        case "quantity":
+          valuesType = "cardsNumber";
+          break;
+        case "score":
+          valuesType = "points";
+          break;
+        default:
+          valuesType = "";
+      }
+      this.chartType == "quantity";
       datasets = datasets.map((dataset: any, index: number) => {
         const data = this.dates.map((date: any) =>
-          chartDatas[date] ? chartDatas[date][dataset.name] : null
+          chartDatas[date] ? chartDatas[date][dataset.name][valuesType] : null
         );
         return {
           label: dataset.name,
@@ -183,7 +203,16 @@ export default defineComponent({
       const resp = await fetch(
         `https://api.trello.com/1/boards/${this.board}/cards?key=${this.apiKey}&token=${this.token}`
       );
-      this.cards = await resp.json();
+      const cards = await resp.json();
+      this.cards = cards.map((card: any) => {
+        const nameSlipetd = card.name.split(" ");
+        const points = nameSlipetd[nameSlipetd.length - 1];
+        card.points = 0;
+        if (points[0] == "|") {
+          card.points = parseInt(points.split("|").join(""));
+        }
+        return card;
+      });
     },
     chageView(view: string) {
       this.view = view;
@@ -197,6 +226,10 @@ export default defineComponent({
     changeDate() {
       localStorage.iintialDayString = this.iintialDayString;
       localStorage.finalDayString = this.finalDayString;
+    },
+    async chartTypeChange() {
+      chart.data = await this.getData();
+      chart.update();
     },
   },
 });
@@ -217,7 +250,36 @@ export default defineComponent({
   </nav>
   <div v-if="view == 'dashboard'">
     <div class="row">
-      <div class="col s12 right-align">
+      <div class="col s3">
+        <div class="row">
+          <div class="col s6">
+            <label>
+              <input
+                v-model="chartType"
+                @change="chartTypeChange"
+                value="quantity"
+                name="group1"
+                type="radio"
+                checked
+              />
+              <span>Quantidade</span>
+            </label>
+          </div>
+          <div class="col s6">
+            <label>
+              <input
+                v-model="chartType"
+                @change="chartTypeChange"
+                value="score"
+                name="group1"
+                type="radio"
+              />
+              <span>Pontuação</span>
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="col s9 right-align">
         <button class="waves-effect waves-light btn" @click="update">
           Atualizar
         </button>
