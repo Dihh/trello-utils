@@ -5,6 +5,7 @@ import ApiKey from '../views/ApiKey.vue'
 import CreateCards from '@/views/CreateCards.vue'
 import Recurrents from '@/views/Recurrents.vue'
 import Dashboard from '@/views/Dashboard.vue'
+import AnalisesVue from '@/views/Analises.vue'
 
 const publicPath = '/trello-utils'
 
@@ -40,6 +41,11 @@ const router = createRouter({
       path: `${publicPath}/recurrents`,
       name: 'recurrents-cards',
       component: Recurrents
+    },
+    {
+      path: `${publicPath}/analises`,
+      name: 'analises',
+      component: AnalisesVue
     }
   ]
 })

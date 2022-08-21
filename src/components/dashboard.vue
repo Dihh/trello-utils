@@ -2,6 +2,7 @@
 import { defineComponent } from "vue";
 import { Chart, registerables } from "chart.js";
 import M from "materialize-css";
+import { uuid } from "@/utils";
 
 let chart: any = null;
 const colors = [
@@ -41,6 +42,7 @@ export default defineComponent({
           intersect: false,
         },
       },
+      analise: {} as any,
       chartData: {} as any,
       lists: [] as any,
       cards: [] as any,
@@ -143,7 +145,8 @@ export default defineComponent({
     },
 
     async mountChart() {
-      this.chartData = await this.getData();
+      await this.getLists();
+      this.chartData = this.getData();
       const chartConfig: any = {
         type: "line",
         data: this.chartData,
@@ -154,8 +157,8 @@ export default defineComponent({
       chart = new Chart(ctx, chartConfig);
     },
 
-    async getData() {
-      await this.getLists();
+    getData(chartType = "") {
+      chartType = chartType || this.chartType;
       let chartDatas = localStorage.chartDatas || "{}";
       chartDatas = JSON.parse(chartDatas);
 
@@ -163,7 +166,7 @@ export default defineComponent({
         return this.selectedLists.includes(list.name);
       });
       let valuesType = "";
-      switch (this.chartType) {
+      switch (chartType) {
         case "quantity":
           valuesType = "cardsNumber";
           break;
@@ -173,7 +176,6 @@ export default defineComponent({
         default:
           valuesType = "";
       }
-      this.chartType == "quantity";
       datasets = datasets.map((dataset: any, index: number) => {
         const data = this.dates.map((date: any) =>
           chartDatas[date] ? chartDatas[date][dataset.name][valuesType] : null
@@ -230,6 +232,30 @@ export default defineComponent({
     async chartTypeChange() {
       chart.data = await this.getData();
       chart.update();
+    },
+    saveView() {
+      this.analise.quantityJson = JSON.stringify(
+        this.getData("quantity"),
+        null,
+        2
+      );
+      this.analise.scoreJson = JSON.stringify(this.getData("score"), null, 2);
+      this.view = "save";
+    },
+    cancelSave() {
+      document.querySelector("form")?.reset();
+      this.chageView("dashboard");
+    },
+    saveAnalise() {
+      event?.preventDefault();
+      const systemSavedsAnalises = localStorage.analises || "[]";
+      const analises = JSON.parse(systemSavedsAnalises);
+      this.analise.id = uuid();
+      analises.push(this.analise);
+      localStorage.analises = JSON.stringify(analises);
+      alert("Salvo");
+      document.querySelector("form")?.reset();
+      this.chageView("dashboard");
     },
   },
 });
@@ -290,6 +316,17 @@ export default defineComponent({
         <canvas id="myChart"></canvas>
       </div>
     </div>
+    <div class="row">
+      <div class="col s12 right-align">
+        <button
+          class="waves-effect waves-light btn"
+          @click="saveView"
+          data-target="modal1"
+        >
+          Salvar
+        </button>
+      </div>
+    </div>
   </div>
   <div v-if="view == 'config'">
     <div class="row">
@@ -336,6 +373,60 @@ export default defineComponent({
       </div>
     </div>
   </div>
+  <div v-if="view == 'save'">
+    <form @submit="saveAnalise()">
+      <div class="row">
+        <div class="col s6">
+          <div class="row form-button">
+            <div class="col s12">
+              <div class="input-field col s11">
+                <input
+                  id="name"
+                  type="text"
+                  v-model="analise.name"
+                  class="validate"
+                  placeholder=" "
+                />
+                <label for="name">Nome:</label>
+              </div>
+            </div>
+          </div>
+          <div class="row form-button">
+            <div class="col s12">
+              <div class="input-field col s11">
+                <textarea
+                  id="obs"
+                  v-model="analise.obs"
+                  class="materialize-textarea validate"
+                  placeholder=" "
+                ></textarea>
+                <label for="obs">Observações:</label>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col s6">
+              <button
+                type="button"
+                @click="cancelSave"
+                class="waves-effect waves-light btn"
+              >
+                Cancelar
+              </button>
+            </div>
+            <div class="col s6 right-align">
+              <button class="waves-effect waves-light btn">Salvar</button>
+            </div>
+          </div>
+        </div>
+        <div class="col s6">
+          <pre>
+          {{ analise.quantityJson }}
+          </pre>
+        </div>
+      </div>
+    </form>
+  </div>
 </template>
 
 <style scoped>
@@ -351,5 +442,10 @@ nav {
   height: 300px;
   overflow-y: auto;
   overflow-x: hidden;
+}
+pre {
+  height: 300px;
+  overflow-y: auto;
+  border: solid 1px #aaa;
 }
 </style>

@@ -19,6 +19,9 @@
   <RouterLink class="waves-effect waves-light btn" to="/trello-utils/checklist"
     >Checklist</RouterLink
   >
+  <RouterLink class="waves-effect waves-light btn" to="/trello-utils/analises"
+    >Análises</RouterLink
+  >
   <RouterLink class="waves-effect waves-light btn" to="/trello-utils/api-key"
     >API_KEY</RouterLink
   >
