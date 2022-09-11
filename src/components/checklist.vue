@@ -1,7 +1,5 @@
-<script lang="ts">
-import { defineComponent } from "vue";
-
-export default defineComponent({});
+<script setup lang="ts">
+import { onMounted, ref } from "vue";
 </script>
 
 <template>component 2</template>
