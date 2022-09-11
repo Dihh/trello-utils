@@ -1,10 +1,10 @@
-<script lang="ts">
-import { defineComponent } from "vue";
-import { Chart, registerables } from "chart.js";
+<script setup lang="ts">
+import { onMounted, ref } from "vue";
 import M from "materialize-css";
 import { uuid } from "@/utils";
+import DashboardNav from "./dashboard/dashboard-nav.vue";
+import AreaChart from "./dashboard/areaChart.vue";
 
-let chart: any = null;
 const colors = [
   "rgba(255, 99, 132, 0.2)",
   "rgba(153, 102, 255, 0.2)",
@@ -18,262 +18,282 @@ const colors = [
   "rgba(255, 0, 0, 0.5)",
 ];
 
-export default defineComponent({
-  data() {
-    return {
-      board: localStorage.board,
-      apiKey: localStorage.apiKey,
-      token: localStorage.token,
-      options: {
-        scales: {
-          y: {
-            stacked: true,
-          },
-        },
-        plugins: {
-          filler: {
-            propagate: false,
-          },
-          "samples-filler-analyser": {
-            target: "chart-analyser",
-          },
-        },
-        interaction: {
-          intersect: false,
-        },
-      },
-      analise: {} as any,
-      chartData: {} as any,
-      lists: [] as any,
-      cards: [] as any,
-      selectedLists: [] as any,
-      dates: [] as any,
-      view: "dashboard",
-      iintialDayString: "",
-      finalDayString: "",
-      chartType: "quantity",
-    };
-  },
-  mounted() {
-    M.AutoInit();
-    Chart.register(...registerables);
-    if (localStorage.dashboardSelectedLists) {
-      this.selectedLists = JSON.parse(localStorage.dashboardSelectedLists);
-    }
-    this.iintialDayString = localStorage.iintialDayString || "";
-    this.finalDayString = localStorage.finalDayString || "";
-    this.getDates();
-    this.mountChart();
-  },
-  methods: {
-    getDates() {
-      const iintialDayString = this.iintialDayString.split("-");
-      const finalDayString = this.finalDayString.split("-");
+let board = localStorage.board;
+let apiKey = localStorage.apiKey;
+let token = localStorage.token;
+let analise = ref<any>({});
+let lists = ref([]);
+let selectedLists = ref<any>([]);
+let view = ref("dashboard");
+let iintialDayString = ref("");
+let finalDayString = ref("");
+let chartType = ref("quantity");
+let totalChartData = ref();
+let tasksChartData = ref();
+let cards: any = [];
+let dates: any = [];
 
-      const startDate = new Date(
-        Date.UTC(
-          parseInt(iintialDayString[0]),
-          parseInt(iintialDayString[1]) - 1,
-          parseInt(iintialDayString[2])
-        )
-      );
-      let endDate = new Date(
-        Date.UTC(
-          parseInt(finalDayString[0]),
-          parseInt(finalDayString[1]) - 1,
-          parseInt(finalDayString[2])
-        )
-      );
-      endDate = new Date(endDate.setDate(endDate.getDate() + 1));
-      if (startDate < endDate) {
-        let currentDate = startDate;
-        while (currentDate < endDate) {
-          const date = currentDate
-            .toISOString()
-            .split("T")[0]
-            .split("-")
-            .reverse()
-            .join("/");
-          this.dates.push(date);
-          currentDate = new Date(
-            currentDate.setDate(currentDate.getDate() + 1)
-          );
-        }
-      }
-    },
-    async update() {
-      let chartDatas = localStorage.chartDatas || "{}";
-      chartDatas = JSON.parse(chartDatas);
+onMounted(() => {
+  M.AutoInit();
+  if (localStorage.dashboardSelectedLists) {
+    selectedLists.value = JSON.parse(localStorage.dashboardSelectedLists);
+  }
+  iintialDayString.value = localStorage.iintialDayString || "";
+  finalDayString.value = localStorage.finalDayString || "";
+  getLists().then(() => {
+    mountChart();
+  });
+  getDates();
+});
 
-      await this.getLists();
-      await this.getCards();
+function getDates() {
+  const datesIntialDayString = iintialDayString.value.split("-");
+  const datesFinalDayString = finalDayString.value.split("-");
 
-      const today = new Date();
-      const date = new Date(
-        Date.UTC(today.getFullYear(), today.getMonth(), today.getDate())
-      )
+  const startDate = new Date(
+    Date.UTC(
+      parseInt(datesIntialDayString[0]),
+      parseInt(datesIntialDayString[1]) - 1,
+      parseInt(datesIntialDayString[2])
+    )
+  );
+  let endDate = new Date(
+    Date.UTC(
+      parseInt(datesFinalDayString[0]),
+      parseInt(datesFinalDayString[1]) - 1,
+      parseInt(datesFinalDayString[2])
+    )
+  );
+  endDate = new Date(endDate.setDate(endDate.getDate() + 1));
+  if (startDate < endDate) {
+    let currentDate = startDate;
+    while (currentDate < endDate) {
+      const date = currentDate
         .toISOString()
         .split("T")[0]
         .split("-")
         .reverse()
         .join("/");
+      dates.push(date);
+      currentDate = new Date(currentDate.setDate(currentDate.getDate() + 1));
+    }
+  }
+}
 
-      const chartData = {
-        date,
-        data: {},
-      } as any;
+async function updateDashboardData() {
+  let dashboardData = localStorage.chartDatas || "{}";
+  dashboardData = JSON.parse(dashboardData);
 
-      this.lists.forEach((list: any) => {
-        const cardsNumber = this.cards.filter(
-          (card: any) => card.idList == list.id
-        ).length;
-        const listCards = this.cards.filter(
-          (card: any) => card.idList == list.id
+  const today = new Date();
+  const date = new Date(
+    Date.UTC(today.getFullYear(), today.getMonth(), today.getDate())
+  )
+    .toISOString()
+    .split("T")[0]
+    .split("-")
+    .reverse()
+    .join("/");
+
+  const updateChartData = {
+    date,
+    data: {},
+  } as any;
+
+  try {
+    await getLists();
+    await getCards();
+    alert("Atualizado");
+    lists.value.forEach((list: any) => {
+      const listCards = cards.filter((card: any) => card.idList == list.id);
+      const labels = getListLabelsData(listCards);
+      const cardsNumber = listCards.length;
+      const points = listCards.reduce((a: any, b: any) => {
+        const aPoints = a.points || a;
+        const bPoints = b.points;
+        return aPoints + bPoints;
+      }, 0);
+      updateChartData.data[list.name] = { cardsNumber, points, labels };
+    });
+    dashboardData[updateChartData.date] = updateChartData.data;
+  } catch (e) {
+    alert("Falha ao atualizado");
+  }
+
+  localStorage.chartDatas = JSON.stringify(dashboardData);
+  totalChartData.value = getTotalChartData();
+}
+
+function getListLabelsData(listCards: any) {
+  const cardsLabels = listCards.map((card: any) =>
+    card.labels.map((label: any) => label.name)
+  );
+
+  const listLabels = cardsLabels.reduce((init: any, label: any) => {
+    return [...init, ...label];
+  }, []);
+  const uniqLabels = Array.from(new Set(listLabels));
+  const labels = uniqLabels.map((label) => {
+    const labelCards = listCards.filter((card: any) =>
+      card.labels.find((cardLabel: any) => cardLabel.name == label)
+    );
+    return {
+      name: label,
+      count: labelCards.length,
+    };
+  });
+  return labels;
+}
+
+function getTaskChartData() {
+  let chartDatas = localStorage.chartDatas || "{}";
+  chartDatas = JSON.parse(chartDatas);
+  let datasets: any = lists.value.filter((list: any) => {
+    return selectedLists.value.includes(list.name);
+  });
+  datasets = datasets.map((dataset: any, index: number) => {
+    let data;
+    data = dates.map((date: any) => {
+      if (chartDatas[date]) {
+        const cardsNumber = chartDatas[date][dataset.name].cardsNumber;
+        const cardsLabels = chartDatas[date][dataset.name].labels || [];
+        const cardsWithRotina = cardsLabels.find(
+          (label: any) => label.name == "Rotina"
         );
-        const points = listCards.reduce((a: any, b: any) => {
-          const aPoints = a.points || a;
-          const bPoints = b.points;
-          return aPoints + bPoints;
-        }, 0);
-        chartData.data[list.name] = { cardsNumber, points };
-      });
-      chartDatas[chartData.date] = chartData.data;
-      localStorage.chartDatas = JSON.stringify(chartDatas);
-      alert("Atualizado");
-      chart.data = await this.getData();
-      chart.update();
-    },
-
-    async mountChart() {
-      await this.getLists();
-      this.chartData = this.getData();
-      const chartConfig: any = {
-        type: "line",
-        data: this.chartData,
-        options: this.options,
-      };
-      const component: any = document.getElementById("myChart");
-      const ctx = component.getContext("2d");
-      chart = new Chart(ctx, chartConfig);
-    },
-
-    getData(chartType = "") {
-      chartType = chartType || this.chartType;
-      let chartDatas = localStorage.chartDatas || "{}";
-      chartDatas = JSON.parse(chartDatas);
-
-      let datasets = this.lists.filter((list: any) => {
-        return this.selectedLists.includes(list.name);
-      });
-      let valuesType = "";
-      switch (chartType) {
-        case "quantity":
-          valuesType = "cardsNumber";
-          break;
-        case "score":
-          valuesType = "points";
-          break;
-        default:
-          valuesType = "";
+        return cardsNumber - (cardsWithRotina ? cardsWithRotina.count : 0);
+      } else {
+        return null;
       }
-      datasets = datasets.map((dataset: any, index: number) => {
-        const data = this.dates.map((date: any) =>
-          chartDatas[date] ? chartDatas[date][dataset.name][valuesType] : null
-        );
-        return {
-          label: dataset.name,
-          data,
-          backgroundColor: colors[index % 10],
-          fill: index == 0 ? "start" : "-1",
-        };
-      });
+    });
+    return {
+      label: dataset.name,
+      data,
+      backgroundColor: colors[index % 10],
+      fill: index == 0 ? "start" : "-1",
+    };
+  });
+  return {
+    labels: dates,
+    datasets: datasets,
+  };
+}
 
-      return {
-        labels: this.dates,
-        datasets: datasets,
-      };
-    },
+function getTotalChartData(dataChartType = "") {
+  chartType.value = dataChartType || chartType.value;
+  let chartDatas = localStorage.chartDatas || "{}";
+  chartDatas = JSON.parse(chartDatas);
+  let datasets: any = lists.value.filter((list: any) => {
+    return selectedLists.value.includes(list.name);
+  });
+  let valuesType = "";
+  switch (chartType.value) {
+    case "quantity":
+      valuesType = "cardsNumber";
+      break;
+    case "score":
+      valuesType = "points";
+      break;
+    default:
+      valuesType = "";
+  }
+  datasets = datasets.map((dataset: any, index: number) => {
+    const data = dates.map((date: any) =>
+      chartDatas[date] ? chartDatas[date][dataset.name][valuesType] : null
+    );
+    return {
+      label: dataset.name,
+      data,
+      backgroundColor: colors[index % 10],
+      fill: index == 0 ? "start" : "-1",
+    };
+  });
 
-    async getLists() {
-      const resp = await fetch(
-        `https://api.trello.com/1/boards/${this.board}/lists?key=${this.apiKey}&token=${this.token}`
-      );
-      this.lists = await resp.json();
-    },
+  return {
+    labels: dates,
+    datasets: datasets,
+  };
+}
 
-    async getCards() {
-      const resp = await fetch(
-        `https://api.trello.com/1/boards/${this.board}/cards?key=${this.apiKey}&token=${this.token}`
-      );
-      const cards = await resp.json();
-      this.cards = cards.map((card: any) => {
-        const nameSlipetd = card.name.split(" ");
-        const points = nameSlipetd[nameSlipetd.length - 1];
-        card.points = 0;
-        if (points[0] == "|") {
-          card.points = parseInt(points.split("|").join(""));
-        }
-        return card;
-      });
-    },
-    chageView(view: string) {
-      this.view = view;
-      this.mountChart();
-    },
-    setLists() {
-      localStorage.dashboardSelectedLists = JSON.stringify(
-        this.selectedLists.map((el: any) => el)
-      );
-    },
-    changeDate() {
-      localStorage.iintialDayString = this.iintialDayString;
-      localStorage.finalDayString = this.finalDayString;
-    },
-    async chartTypeChange() {
-      chart.data = await this.getData();
-      chart.update();
-    },
-    saveView() {
-      this.analise.quantityJson = JSON.stringify(
-        this.getData("quantity"),
-        null,
-        2
-      );
-      this.analise.scoreJson = JSON.stringify(this.getData("score"), null, 2);
-      this.view = "save";
-    },
-    cancelSave() {
-      document.querySelector("form")?.reset();
-      this.chageView("dashboard");
-    },
-    saveAnalise() {
-      event?.preventDefault();
-      const systemSavedsAnalises = localStorage.analises || "[]";
-      const analises = JSON.parse(systemSavedsAnalises);
-      this.analise.id = uuid();
-      analises.push(this.analise);
-      localStorage.analises = JSON.stringify(analises);
-      alert("Salvo");
-      document.querySelector("form")?.reset();
-      this.chageView("dashboard");
-    },
-  },
-});
+async function getLists() {
+  try {
+    const resp = await fetch(
+      `https://api.trello.com/1/boards/${board}/lists?key=${apiKey}&token=${token}`
+    );
+    lists.value = await resp.json();
+  } catch (e) {
+    lists.value = JSON.parse(localStorage.lists);
+  }
+}
+
+async function getCards() {
+  const resp = await fetch(
+    `https://api.trello.com/1/boards/${board}/cards?key=${apiKey}&token=${token}`
+  );
+  const getCards = await resp.json();
+  cards = getCards.map((card: any) => {
+    const nameSlipetd = card.name.split(" ");
+    const points = nameSlipetd[nameSlipetd.length - 1];
+    card.points = 0;
+    if (points[0] == "|") {
+      card.points = parseInt(points.split("|").join(""));
+    }
+    return card;
+  });
+}
+
+function mountChart() {
+  totalChartData.value = getTotalChartData();
+  tasksChartData.value = getTaskChartData();
+}
+
+function chageView(newView: any) {
+  view.value = newView;
+  mountChart();
+}
+
+function setLists() {
+  localStorage.dashboardSelectedLists = JSON.stringify(
+    selectedLists.value.map((el: any) => el)
+  );
+}
+function changeDate() {
+  localStorage.iintialDayString = iintialDayString;
+  localStorage.finalDayString = finalDayString;
+}
+
+async function changeChartType() {
+  totalChartData.value = getTotalChartData();
+}
+
+function saveView() {
+  analise.value.quantityJson = JSON.stringify(
+    getTotalChartData("quantity"),
+    null,
+    2
+  );
+  analise.value.scoreJson = JSON.stringify(getTotalChartData("score"), null, 2);
+  view.value = "save";
+}
+
+function cancelSave() {
+  document.querySelector("form")?.reset();
+  chageView("dashboard");
+}
+
+function saveAnalise() {
+  event?.preventDefault();
+  const systemSavedsAnalises = localStorage.analises || "[]";
+  const analises = JSON.parse(systemSavedsAnalises);
+  analise.value.id = uuid();
+  analises.push(analise.value);
+  localStorage.analises = JSON.stringify(analises);
+  alert("Salvo");
+  document.querySelector("form")?.reset();
+  chageView("dashboard");
+}
 </script>
 
 <template>
-  <nav class="nav-extended">
-    <div class="nav-content">
-      <ul class="tabs tabs-transparent">
-        <li class="tab">
-          <a href="#test1" @click="chageView('dashboard')">Dashboard</a>
-        </li>
-        <li class="tab">
-          <a href="#test2" @click="chageView('config')">Configuração</a>
-        </li>
-      </ul>
-    </div>
-  </nav>
+  <DashboardNav @changeView="chageView" />
   <div v-if="view == 'dashboard'">
     <div class="row">
       <div class="col s3">
@@ -282,9 +302,9 @@ export default defineComponent({
             <label>
               <input
                 v-model="chartType"
-                @change="chartTypeChange"
+                @change="changeChartType"
                 value="quantity"
-                name="group1"
+                name="chartType"
                 type="radio"
                 checked
               />
@@ -295,9 +315,9 @@ export default defineComponent({
             <label>
               <input
                 v-model="chartType"
-                @change="chartTypeChange"
+                @change="changeChartType"
                 value="score"
-                name="group1"
+                name="chartType"
                 type="radio"
               />
               <span>Pontuação</span>
@@ -306,16 +326,20 @@ export default defineComponent({
         </div>
       </div>
       <div class="col s9 right-align">
-        <button class="waves-effect waves-light btn" @click="update">
+        <button
+          class="waves-effect waves-light btn"
+          @click="updateDashboardData"
+        >
           Atualizar
         </button>
       </div>
     </div>
-    <div class="row">
-      <div class="col s12">
-        <canvas id="myChart"></canvas>
-      </div>
-    </div>
+    <AreaChart
+      v-if="totalChartData"
+      @changeChartType="changeChartType"
+      :chartData="totalChartData"
+      :chartId="'areaChart'"
+    />
     <div class="row">
       <div class="col s12 right-align">
         <button
@@ -327,6 +351,12 @@ export default defineComponent({
         </button>
       </div>
     </div>
+    <AreaChart
+      v-if="totalChartData"
+      @changeChartType="changeChartType"
+      :chartData="tasksChartData"
+      :chartId="'areaChart1'"
+    />
   </div>
   <div v-if="view == 'config'">
     <div class="row">
