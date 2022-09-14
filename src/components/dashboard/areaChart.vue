@@ -35,6 +35,7 @@ onMounted(() => {
 
 watch(props, (newValue, oldValue) => {
   chart.data = props.chartData;
+  console.log("here");
   chart.update();
 });
 

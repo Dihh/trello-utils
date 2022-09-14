@@ -43,10 +43,10 @@ onMounted(() => {
   getLists().then(() => {
     mountChart();
   });
-  getDates();
 });
 
 function getDates() {
+  dates = [];
   const datesIntialDayString = iintialDayString.value.split("-");
   const datesFinalDayString = finalDayString.value.split("-");
 
@@ -241,11 +241,12 @@ async function getCards() {
 }
 
 function mountChart() {
+  getDates();
   totalChartData.value = getTotalChartData();
   tasksChartData.value = getTaskChartData();
 }
 
-function chageView(newView: any) {
+function changeView(newView: any) {
   view.value = newView;
   mountChart();
 }
@@ -256,8 +257,9 @@ function setLists() {
   );
 }
 function changeDate() {
-  localStorage.iintialDayString = iintialDayString;
-  localStorage.finalDayString = finalDayString;
+  localStorage.iintialDayString = iintialDayString.value;
+  localStorage.finalDayString = finalDayString.value;
+  changeView("dashboard");
 }
 
 async function changeChartType() {
@@ -276,7 +278,7 @@ function saveView() {
 
 function cancelSave() {
   document.querySelector("form")?.reset();
-  chageView("dashboard");
+  changeView("dashboard");
 }
 
 function saveAnalise() {
@@ -288,12 +290,12 @@ function saveAnalise() {
   localStorage.analises = JSON.stringify(analises);
   alert("Salvo");
   document.querySelector("form")?.reset();
-  chageView("dashboard");
+  changeView("dashboard");
 }
 </script>
 
 <template>
-  <DashboardNav @changeView="chageView" />
+  <DashboardNav @changeView="changeView" />
   <div v-if="view == 'dashboard'">
     <div class="row">
       <div class="col s3">
@@ -362,23 +364,13 @@ function saveAnalise() {
     <div class="row">
       <div class="col s3">
         <div class="input-field col s11">
-          <input
-            id="initialDate"
-            type="date"
-            v-model="iintialDayString"
-            @change="changeDate()"
-          />
+          <input id="initialDate" type="date" v-model="iintialDayString" />
           <label for="initialDate">Data início</label>
         </div>
       </div>
       <div class="col s3">
         <div class="input-field col s11">
-          <input
-            id="initialDate"
-            type="date"
-            v-model="finalDayString"
-            @change="changeDate()"
-          />
+          <input id="initialDate" type="date" v-model="finalDayString" />
           <label for="initialDate">Data fim</label>
         </div>
       </div>
@@ -400,6 +392,13 @@ function saveAnalise() {
             </div>
           </div>
         </div>
+      </div>
+    </div>
+    <div class="row top-2">
+      <div class="col s12">
+        <button class="waves-effect waves-light btn" @click="changeDate">
+          Salvar
+        </button>
       </div>
     </div>
   </div>
@@ -477,5 +476,9 @@ pre {
   height: 300px;
   overflow-y: auto;
   border: solid 1px #aaa;
+}
+
+.top-2 {
+  margin-top: 2rem;
 }
 </style>
