@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
 import M from "materialize-css";
+import router from "@/router";
+
 import { uuid } from "@/utils";
 import DashboardNav from "./dashboard/dashboard-nav.vue";
 import AreaChart from "./dashboard/areaChart.vue";
@@ -21,7 +23,6 @@ const colors = [
 let board = localStorage.board;
 let apiKey = localStorage.apiKey;
 let token = localStorage.token;
-let analise = ref<any>({});
 let lists: any = ref([]);
 let selectedLists = ref<any>([]);
 let view = ref("dashboard");
@@ -267,28 +268,14 @@ async function changeChartType() {
 }
 
 function saveView() {
-  analise.value.quantityJson = JSON.stringify(
-    getTotalChartData("quantity"),
-    null,
-    2
-  );
-  analise.value.scoreJson = JSON.stringify(getTotalChartData("score"), null, 2);
-  view.value = "save";
+  const analise: any = {};
+  analise.quantityJson = JSON.stringify(getTotalChartData("quantity"), null, 2);
+  analise.scoreJson = JSON.stringify(getTotalChartData("score"), null, 2);
+  localStorage.analise = JSON.stringify(analise);
+  router.push({ path: "./analises-form" });
 }
 
 function cancelSave() {
-  document.querySelector("form")?.reset();
-  changeView("dashboard");
-}
-
-function saveAnalise() {
-  event?.preventDefault();
-  const systemSavedsAnalises = localStorage.analises || "[]";
-  const analises = JSON.parse(systemSavedsAnalises);
-  analise.value.id = uuid();
-  analises.push(analise.value);
-  localStorage.analises = JSON.stringify(analises);
-  alert("Salvo");
   document.querySelector("form")?.reset();
   changeView("dashboard");
 }
@@ -401,60 +388,6 @@ function saveAnalise() {
         </button>
       </div>
     </div>
-  </div>
-  <div v-if="view == 'save'">
-    <form @submit="saveAnalise()">
-      <div class="row">
-        <div class="col s6">
-          <div class="row form-button">
-            <div class="col s12">
-              <div class="input-field col s11">
-                <input
-                  id="name"
-                  type="text"
-                  v-model="analise.name"
-                  class="validate"
-                  placeholder=" "
-                />
-                <label for="name">Nome:</label>
-              </div>
-            </div>
-          </div>
-          <div class="row form-button">
-            <div class="col s12">
-              <div class="input-field col s11">
-                <textarea
-                  id="obs"
-                  v-model="analise.obs"
-                  class="materialize-textarea validate"
-                  placeholder=" "
-                ></textarea>
-                <label for="obs">Observações:</label>
-              </div>
-            </div>
-          </div>
-          <div class="row">
-            <div class="col s6">
-              <button
-                type="button"
-                @click="cancelSave"
-                class="waves-effect waves-light btn"
-              >
-                Cancelar
-              </button>
-            </div>
-            <div class="col s6 right-align">
-              <button class="waves-effect waves-light btn">Salvar</button>
-            </div>
-          </div>
-        </div>
-        <div class="col s6">
-          <pre>
-          {{ analise.quantityJson }}
-          </pre>
-        </div>
-      </div>
-    </form>
   </div>
 </template>
 

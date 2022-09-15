@@ -6,6 +6,7 @@ import CreateCards from '@/views/CreateCards.vue'
 import Recurrents from '@/views/Recurrents.vue'
 import Dashboard from '@/views/Dashboard.vue'
 import AnalisesVue from '@/views/Analises.vue'
+import AnalisesForm from '@/views/Analises-form.vue'
 
 const publicPath = '/trello-utils'
 
@@ -46,6 +47,11 @@ const router = createRouter({
       path: `${publicPath}/analises`,
       name: 'analises',
       component: AnalisesVue
+    },
+    {
+      path: `${publicPath}/analises-form`,
+      name: 'analises-form',
+      component: AnalisesForm
     }
   ]
 })
