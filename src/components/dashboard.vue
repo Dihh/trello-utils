@@ -6,6 +6,7 @@ import router from "@/router";
 import { uuid } from "@/utils";
 import DashboardNav from "./dashboard/dashboard-nav.vue";
 import AreaChart from "./dashboard/areaChart.vue";
+import Config from "./dashboard/config.vue";
 
 const colors = [
   "rgba(255, 99, 132, 0.2)",
@@ -36,9 +37,6 @@ let dates: any = [];
 
 onMounted(() => {
   M.AutoInit();
-  if (localStorage.dashboardSelectedLists) {
-    selectedLists.value = JSON.parse(localStorage.dashboardSelectedLists);
-  }
   iintialDayString.value = localStorage.iintialDayString || "";
   finalDayString.value = localStorage.finalDayString || "";
   getLists().then(() => {
@@ -122,6 +120,7 @@ async function updateDashboardData() {
 
   localStorage.chartDatas = JSON.stringify(dashboardData);
   totalChartData.value = getTotalChartData();
+  tasksChartData.value = getTaskChartData();
 }
 
 function getListLabelsData(listCards: any) {
@@ -242,6 +241,9 @@ async function getCards() {
 }
 
 function mountChart() {
+  if (localStorage.dashboardSelectedLists) {
+    selectedLists.value = JSON.parse(localStorage.dashboardSelectedLists);
+  }
   getDates();
   totalChartData.value = getTotalChartData();
   tasksChartData.value = getTaskChartData();
@@ -252,19 +254,9 @@ function changeView(newView: any) {
   mountChart();
 }
 
-function setLists() {
-  localStorage.dashboardSelectedLists = JSON.stringify(
-    selectedLists.value.map((el: any) => el)
-  );
-}
-function changeDate() {
-  localStorage.iintialDayString = iintialDayString.value;
-  localStorage.finalDayString = finalDayString.value;
-  changeView("dashboard");
-}
-
 async function changeChartType() {
   totalChartData.value = getTotalChartData();
+  tasksChartData.value = getTaskChartData();
 }
 
 function saveView() {
@@ -273,11 +265,6 @@ function saveView() {
   analise.scoreJson = JSON.stringify(getTotalChartData("score"), null, 2);
   localStorage.analise = JSON.stringify(analise);
   router.push({ path: "./analises-form" });
-}
-
-function cancelSave() {
-  document.querySelector("form")?.reset();
-  changeView("dashboard");
 }
 </script>
 
@@ -314,7 +301,7 @@ function cancelSave() {
           </div>
         </div>
       </div>
-      <div class="col s9 right-align">
+      <div class="col s8 right-align">
         <button
           class="waves-effect waves-light btn"
           @click="updateDashboardData"
@@ -322,15 +309,7 @@ function cancelSave() {
           Atualizar
         </button>
       </div>
-    </div>
-    <AreaChart
-      v-if="totalChartData"
-      @changeChartType="changeChartType"
-      :chartData="totalChartData"
-      :chartId="'areaChart'"
-    />
-    <div class="row">
-      <div class="col s12 right-align">
+      <div class="col s1 right-align">
         <button
           class="waves-effect waves-light btn"
           @click="saveView"
@@ -343,51 +322,23 @@ function cancelSave() {
     <AreaChart
       v-if="totalChartData"
       @changeChartType="changeChartType"
+      :chartData="totalChartData"
+      :chartId="'areaChart'"
+    />
+    <div class="row"></div>
+    <AreaChart
+      v-if="totalChartData"
+      @changeChartType="changeChartType"
       :chartData="tasksChartData"
       :chartId="'areaChart1'"
     />
   </div>
   <div v-if="view == 'config'">
-    <div class="row">
-      <div class="col s3">
-        <div class="input-field col s11">
-          <input id="initialDate" type="date" v-model="iintialDayString" />
-          <label for="initialDate">Data início</label>
-        </div>
-      </div>
-      <div class="col s3">
-        <div class="input-field col s11">
-          <input id="initialDate" type="date" v-model="finalDayString" />
-          <label for="initialDate">Data fim</label>
-        </div>
-      </div>
-    </div>
-    <div class="row">
-      <div class="col s7 lists">
-        <div class="select-list">
-          <div class="row" v-for="(list, index) in lists" :key="index">
-            <div class="col s12">
-              <label>
-                <input
-                  type="checkbox"
-                  :value="list.name"
-                  @change="setLists()"
-                  v-model="selectedLists"
-                />
-                <span>{{ list.name }}</span>
-              </label>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="row top-2">
-      <div class="col s12">
-        <button class="waves-effect waves-light btn" @click="changeDate">
-          Salvar
-        </button>
-      </div>
-    </div>
+    <Config
+      @changeView="changeView"
+      :lists="lists"
+      :selectedLists="selectedLists"
+    />
   </div>
 </template>
 
