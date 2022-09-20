@@ -1,5 +1,4 @@
-<script setup lang="ts">
-</script>
+<script setup lang="ts"></script>
 
 <template>
   <RouterLink class="waves-effect waves-light btn" to="/trello-utils/"

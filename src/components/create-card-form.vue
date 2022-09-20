@@ -3,18 +3,18 @@ import { onMounted, ref } from "vue";
 import { uuid, createCards } from "../utils";
 import Search from "@/components/shared/search.vue";
 
-let labels = ref([]);
-let listsFiltered = ref([]);
-let selectedsCheckbox = ref([]);
-let labelsSelecteds = ref([]);
-let selectedsLists = ref([]);
-let cardName = ref("");
-let selectedsLabels = ref([]);
+const labels = ref([]);
+const listsFiltered = ref([]);
+const selectedsCheckbox = ref([]);
+const labelsSelecteds = ref([]);
+const selectedsLists = ref([]);
+const cardName = ref("");
+const selectedsLabels = ref([]);
 let lists: any = [];
-let board = localStorage.board;
-let apiKey = localStorage.apiKey;
-let token = localStorage.token;
-let searchValue = "";
+const board = localStorage.board;
+const apiKey = localStorage.apiKey;
+const token = localStorage.token;
+const searchValue = "";
 
 onMounted(() => {
   getLists();

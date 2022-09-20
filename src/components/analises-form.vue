@@ -4,7 +4,7 @@ import { onMounted, ref } from "vue";
 import M from "materialize-css";
 import router from "@/router";
 
-let analise = ref<any>(JSON.parse(localStorage.analise));
+const analise = ref<any>(JSON.parse(localStorage.analise));
 
 onMounted(() => {
   M.AutoInit();

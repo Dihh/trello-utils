@@ -7,8 +7,8 @@ const props = defineProps<{
   selectedLists: any;
 }>();
 
-let iintialDay = ref("");
-let finalDay = ref("");
+const iintialDay = ref("");
+const finalDay = ref("");
 
 const emit = defineEmits(["changeView", "setSelectedList"]);
 

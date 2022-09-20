@@ -21,17 +21,17 @@ const colors = [
   "rgba(255, 0, 0, 0.5)",
 ];
 
-let board = localStorage.board;
-let apiKey = localStorage.apiKey;
-let token = localStorage.token;
-let lists: any = ref([]);
-let selectedLists = ref<any>([]);
-let view = ref("dashboard");
-let iintialDayString = ref("");
-let finalDayString = ref("");
-let chartType = ref("quantity");
-let totalChartData = ref();
-let tasksChartData = ref();
+const board = localStorage.board;
+const apiKey = localStorage.apiKey;
+const token = localStorage.token;
+const lists: any = ref([]);
+const selectedLists = ref<any>([]);
+const view = ref("dashboard");
+const iintialDayString = ref("");
+const finalDayString = ref("");
+const chartType = ref("quantity");
+const totalChartData = ref();
+const tasksChartData = ref();
 let cards: any = [];
 let dates: any = [];
 

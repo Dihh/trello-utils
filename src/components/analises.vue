@@ -5,7 +5,7 @@ import router from "@/router";
 import M from "materialize-css";
 import { onMounted, ref } from "vue";
 
-let analises = ref([]) as any;
+const analises = ref([]) as any;
 
 onMounted(() => {
   M.AutoInit();

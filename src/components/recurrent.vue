@@ -5,9 +5,9 @@ import { createCards } from "@/utils";
 import M from "materialize-css";
 import { onMounted, ref } from "vue";
 
-let recurrents = ref([]);
-let apiKey = localStorage.apiKey;
-let token = localStorage.token;
+const recurrents = ref([]);
+const apiKey = localStorage.apiKey;
+const token = localStorage.token;
 
 onMounted(() => {
   M.AutoInit();

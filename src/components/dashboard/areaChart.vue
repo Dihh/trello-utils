@@ -9,7 +9,7 @@ const props = defineProps<{
 
 let chart: any = null;
 
-let options = {
+const options = {
   scales: {
     y: {
       stacked: true,

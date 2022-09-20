@@ -5,5 +5,3 @@ import ApiKeyForm from "@/components/api-key-form.vue";
 <template>
   <ApiKeyForm />
 </template>
-
-
