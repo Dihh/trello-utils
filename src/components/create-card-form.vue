@@ -3,13 +3,13 @@ import { onMounted, ref } from "vue";
 import { uuid, createCards } from "../utils";
 import Search from "@/components/shared/search.vue";
 
-const labels = ref([]);
-const listsFiltered = ref([]);
-const selectedsCheckbox = ref([]);
-const labelsSelecteds = ref([]);
-const selectedsLists = ref([]);
-const cardName = ref("");
-const selectedsLabels = ref([]);
+const labels = ref<any>([]);
+const listsFiltered = ref<any>([]);
+const selectedsCheckbox = ref<any>([]);
+const labelsSelecteds = ref<any>([]);
+const selectedsLists = ref<any>([]);
+const cardName = ref<any>("");
+const selectedsLabels = ref<any>([]);
 let lists: any = [];
 const board = localStorage.board;
 const apiKey = localStorage.apiKey;
@@ -56,7 +56,9 @@ function filter(search = "") {
 }
 
 function select() {
-  const selecteds: string[] = selectedsCheckbox.value.map((element) => element);
+  const selecteds: string[] = selectedsCheckbox.value.map(
+    (element: any) => element
+  );
   const _selectedsLabels: string[] = labelsSelecteds.value.map(
     (element: any) => element
   );

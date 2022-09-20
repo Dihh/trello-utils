@@ -24,6 +24,8 @@ function edit(id: string) {
   );
   router.push({ path: "./analises-form" });
 }
+
+function search() {}
 </script>
 
 <template>

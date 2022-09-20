@@ -3,9 +3,9 @@ import Search from "@/components/shared/search.vue";
 
 import { onMounted, ref } from "vue";
 
-const cardsFiltered = ref([]);
-const selectedsCheckbox: any = ref([]);
-const selectedsCards = ref([]);
+const cardsFiltered = ref<any>([]);
+const selectedsCheckbox: any = ref<any>([]);
+const selectedsCards = ref<any>([]);
 let cards: any = [];
 const board = localStorage.board;
 const apiKey = localStorage.apiKey;

@@ -5,7 +5,7 @@ import { createCards } from "@/utils";
 import M from "materialize-css";
 import { onMounted, ref } from "vue";
 
-const recurrents = ref([]);
+const recurrents = ref<any>([]);
 const apiKey = localStorage.apiKey;
 const token = localStorage.token;
 
@@ -32,6 +32,8 @@ async function send(recurrent: any) {
   );
   alert("Sucesso");
 }
+
+function search() {}
 </script>
 
 <template>
