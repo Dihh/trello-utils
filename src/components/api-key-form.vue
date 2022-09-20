@@ -1,34 +1,19 @@
-<style scoped>
-.input-field {
-  margin-top: 0px;
-}
-.form-button {
-  text-align: right;
-}
-</style>
+<script setup lang="ts">
+import { defineComponent, ref } from "vue";
 
-<script lang="ts">
-import { defineComponent } from "vue";
-export default defineComponent({
-  data() {
-    return {
-      board: "",
-      apiKey: "",
-      token: "",
-    };
-  },
-  methods: {
-    save() {
-      localStorage.board = this.board;
-      localStorage.apiKey = this.apiKey;
-      localStorage.token = this.token;
-      alert("Sucesso");
-      this.board = "";
-      this.apiKey = "";
-      this.token = "";
-    },
-  },
-});
+const board = ref("");
+const apiKey = ref("");
+const token = ref("");
+
+function save() {
+  localStorage.board = board.value;
+  localStorage.apiKey = apiKey.value;
+  localStorage.token = token.value;
+  alert("Sucesso");
+  board.value = "";
+  apiKey.value = "";
+  token.value = "";
+}
 </script>
 
 <template>
@@ -58,3 +43,12 @@ export default defineComponent({
     </div>
   </form>
 </template>
+
+<style scoped>
+.input-field {
+  margin-top: 0px;
+}
+.form-button {
+  text-align: right;
+}
+</style>

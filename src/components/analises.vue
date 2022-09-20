@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import Search from "@/components/shared/search.vue";
+
 import router from "@/router";
 import M from "materialize-css";
 import { onMounted, ref } from "vue";
@@ -25,6 +27,9 @@ function edit(id: string) {
 </script>
 
 <template>
+  <div class="row">
+    <Search @search="search" />
+  </div>
   <table class="highlight">
     <thead>
       <tr>

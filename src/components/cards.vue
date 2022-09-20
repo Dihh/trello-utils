@@ -1,71 +1,63 @@
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import Search from "@/components/shared/search.vue";
 
-export default defineComponent({
-  data() {
-    return {
-      cards: [] as any,
-      cardsFiltered: [] as any,
-      selecteds: [],
-      selectedsCards: [] as any,
-      board: localStorage.board,
-      apiKey: localStorage.apiKey,
-      token: localStorage.token,
-      searchValue: "",
-    };
-  },
-  mounted() {
-    this.getCards();
-  },
-  methods: {
-    async getCards() {
-      const resp = await fetch(
-        `https://api.trello.com/1/boards/${this.board}/cards?key=${this.apiKey}&token=${this.token}`
-      );
-      this.cards = await resp.json();
-      this.cardsFilter();
-    },
-    send() {
-      event?.preventDefault();
-    },
-    search() {
-      event?.preventDefault();
-      this.cardsFilter();
-    },
-    cardsFilter() {
-      this.cardsFiltered = this.cards.filter((card: any) => {
-        const filterValue = this.searchValue
-          .normalize("NFD")
-          .replace(/[\u0300-\u036f]/g, "")
-          .toLowerCase();
-        return card.name
-          .normalize("NFD")
-          .replace(/[\u0300-\u036f]/g, "")
-          .toLowerCase()
-          .includes(filterValue);
-      });
-    },
-    select() {
-      const selecteds: string[] = this.selecteds.map((element) => element);
-      this.selectedsCards = this.cards.filter((card: any) =>
-        selecteds.includes(card.id)
-      );
-    },
-  },
+import { onMounted, ref } from "vue";
+
+const cardsFiltered = ref([]);
+const selectedsCheckbox: any = ref([]);
+const selectedsCards = ref([]);
+let cards: any = [];
+const board = localStorage.board;
+const apiKey = localStorage.apiKey;
+const token = localStorage.token;
+
+onMounted(() => {
+  getCards();
 });
+
+async function getCards() {
+  const resp = await fetch(
+    `https://api.trello.com/1/boards/${board}/cards?key=${apiKey}&token=${token}`
+  );
+  cards = await resp.json();
+  cardsFilter();
+}
+
+function send() {
+  event?.preventDefault();
+}
+
+function search(search: string) {
+  cardsFilter(search);
+}
+
+function cardsFilter(search = "") {
+  cardsFiltered.value = cards.filter((card: any) => {
+    const filterValue = search
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
+    return card.name
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .includes(filterValue);
+  });
+}
+
+function select() {
+  const selecteds: string[] = selectedsCheckbox.value.map(
+    (element: any) => element
+  );
+  selectedsCards.value = cards.filter((card: any) =>
+    selecteds.includes(card.id)
+  );
+}
 </script>
 
 <template>
   <div class="row">
-    <div class="input-field col s11">
-      <input v-model="searchValue" id="search" type="text" @keyup="search" />
-      <label for="search"></label>
-    </div>
-    <div class="input-field col s1">
-      <button class="waves-effect waves-light btn">
-        <i class="material-icons">search</i>
-      </button>
-    </div>
+    <Search @search="search" />
   </div>
   <form @submit="send()">
     <div class="row">
@@ -77,7 +69,7 @@ export default defineComponent({
                 <input
                   type="checkbox"
                   :value="card.id"
-                  v-model="selecteds"
+                  v-model="selectedsCheckbox"
                   @change="select"
                 />
                 <span>{{ card.name }}</span>

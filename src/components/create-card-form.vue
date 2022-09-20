@@ -1,114 +1,107 @@
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import { onMounted, ref } from "vue";
 import { uuid, createCards } from "../utils";
+import Search from "@/components/shared/search.vue";
 
-export default defineComponent({
-  data() {
-    return {
-      lists: [] as any,
-      labels: [] as any,
-      listsFiltered: [] as any,
-      selecteds: [],
-      labelsSelecteds: [],
-      selectedsLabels: [] as any,
-      selectedsLists: [] as any,
-      board: localStorage.board,
-      apiKey: localStorage.apiKey,
-      token: localStorage.token,
-      searchValue: "",
-      cardName: "",
-    };
-  },
-  mounted() {
-    this.getLists();
-    this.getLabels();
-  },
-  methods: {
-    async getLists() {
-      const resp = await fetch(
-        `https://api.trello.com/1/boards/${this.board}/lists?key=${this.apiKey}&token=${this.token}`
-      );
-      this.lists = await resp.json();
-      this.filter();
-    },
-    async getLabels() {
-      const resp = await fetch(
-        `https://api.trello.com/1/boards/${this.board}/labels?key=${this.apiKey}&token=${this.token}`
-      );
-      this.labels = await resp.json();
-    },
-    search() {
-      event?.preventDefault();
-      this.filter();
-    },
-    filter() {
-      this.listsFiltered = this.lists.filter((list: any) => {
-        const filterValue = this.searchValue
-          .normalize("NFD")
-          .replace(/[\u0300-\u036f]/g, "")
-          .toLowerCase();
-        return list.name
-          .normalize("NFD")
-          .replace(/[\u0300-\u036f]/g, "")
-          .toLowerCase()
-          .includes(filterValue);
-      });
-    },
-    select() {
-      const selecteds: string[] = this.selecteds.map((element) => element);
-      const selectedsLabels: string[] = this.labelsSelecteds.map(
-        (element: any) => element
-      );
-      this.selectedsLists = this.lists.filter((card: any) =>
-        selecteds.includes(card.id)
-      );
-      this.selectedsLabels = this.labels.filter((label: any) =>
-        selectedsLabels.includes(label.id)
-      );
-    },
-    async send() {
-      event?.preventDefault();
-      await createCards(
-        this.selectedsLists,
-        this.cardName,
-        this.selectedsLabels,
-        this.apiKey,
-        this.token
-      );
-      alert("Sucesso");
-      this.cardName = "";
-    },
-    saveRecurrents() {
-      const systemRecurrents = localStorage.recurrents || "[]";
-      const recurrents = JSON.parse(systemRecurrents);
-      const recurrent = {
-        id: uuid(),
-        selectedsLists: this.selectedsLists,
-        cardName: this.cardName,
-        selectedsLabels: this.selectedsLabels,
-      };
-      if (recurrent.cardName) {
-        recurrents.push(recurrent);
-        localStorage.recurrents = JSON.stringify(recurrents);
-        alert("Salvo");
-        document.querySelector("form")?.reset();
-      }
-    },
-  },
+let labels = ref([]);
+let listsFiltered = ref([]);
+let selectedsCheckbox = ref([]);
+let labelsSelecteds = ref([]);
+let selectedsLists = ref([]);
+let cardName = ref("");
+let selectedsLabels = ref([]);
+let lists: any = [];
+let board = localStorage.board;
+let apiKey = localStorage.apiKey;
+let token = localStorage.token;
+let searchValue = "";
+
+onMounted(() => {
+  getLists();
+  getLabels();
 });
+
+async function getLists() {
+  const resp = await fetch(
+    `https://api.trello.com/1/boards/${board}/lists?key=${apiKey}&token=${token}`
+  );
+  lists = await resp.json();
+  filter();
+}
+
+async function getLabels() {
+  const resp = await fetch(
+    `https://api.trello.com/1/boards/${board}/labels?key=${apiKey}&token=${token}`
+  );
+  labels.value = await resp.json();
+}
+
+function search(search: string) {
+  event?.preventDefault();
+  filter(search);
+}
+
+function filter(search = "") {
+  listsFiltered.value = lists.filter((list: any) => {
+    const filterValue = search
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
+    return list.name
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .includes(filterValue);
+  });
+}
+
+function select() {
+  const selecteds: string[] = selectedsCheckbox.value.map((element) => element);
+  const _selectedsLabels: string[] = labelsSelecteds.value.map(
+    (element: any) => element
+  );
+  selectedsLists.value = lists.filter((card: any) =>
+    selecteds.includes(card.id)
+  );
+  selectedsLabels.value = labels.value.filter((label: any) =>
+    _selectedsLabels.includes(label.id)
+  );
+}
+
+async function send() {
+  event?.preventDefault();
+  await createCards(
+    selectedsLists.value,
+    cardName.value,
+    selectedsLabels.value,
+    apiKey,
+    token
+  );
+  alert("Sucesso");
+  cardName.value = "";
+}
+
+function saveRecurrents() {
+  const systemRecurrents = localStorage.recurrents || "[]";
+  const recurrents = JSON.parse(systemRecurrents);
+  const recurrent = {
+    id: uuid(),
+    selectedsLists: selectedsLists.value,
+    cardName: cardName.value,
+    selectedsLabels: selectedsLabels.value,
+  };
+  if (recurrent.cardName) {
+    recurrents.push(recurrent);
+    localStorage.recurrents = JSON.stringify(recurrents);
+    alert("Salvo");
+    document.querySelector("form")?.reset();
+  }
+}
 </script>
 
 <template>
   <div class="row">
-    <div class="input-field col s11">
-      <input v-model="searchValue" id="search" type="text" @keyup="search" />
-      <label for="search"></label>
-    </div>
-    <div class="input-field col s1">
-      <button class="waves-effect waves-light btn">
-        <i class="material-icons">search</i>
-      </button>
-    </div>
+    <Search @search="search" />
   </div>
   <form @submit="send()">
     <div class="row">
@@ -125,7 +118,7 @@ export default defineComponent({
                   <input
                     type="checkbox"
                     :value="list.id"
-                    v-model="selecteds"
+                    v-model="selectedsCheckbox"
                     @change="select"
                   />
                   <span>{{ list.name }}</span>

@@ -1,43 +1,43 @@
-<script lang="ts">
+<script setup lang="ts">
+import Search from "@/components/shared/search.vue";
+
 import { createCards } from "@/utils";
 import M from "materialize-css";
-import { defineComponent } from "vue";
+import { onMounted, ref } from "vue";
 
-export default defineComponent({
-  data() {
-    return {
-      recurrents: [] as any,
-      apiKey: localStorage.apiKey,
-      token: localStorage.token,
-    };
-  },
-  mounted() {
-    M.AutoInit();
-    const systemRecurrents = localStorage.recurrents || "[]";
-    this.recurrents = JSON.parse(systemRecurrents);
-  },
-  methods: {
-    remove(id: string) {
-      this.recurrents = this.recurrents.filter(
-        (recurrent: any) => recurrent.id != id
-      );
-      localStorage.recurrents = JSON.stringify(this.recurrents);
-    },
-    async send(recurrent: any) {
-      await createCards(
-        recurrent.selectedsLists,
-        recurrent.cardName,
-        recurrent.selectedsLabels,
-        this.apiKey,
-        this.token
-      );
-      alert("Sucesso");
-    },
-  },
+let recurrents = ref([]);
+let apiKey = localStorage.apiKey;
+let token = localStorage.token;
+
+onMounted(() => {
+  M.AutoInit();
+  const systemRecurrents = localStorage.recurrents || "[]";
+  recurrents.value = JSON.parse(systemRecurrents);
 });
+
+function remove(id: string) {
+  recurrents.value = recurrents.value.filter(
+    (recurrent: any) => recurrent.id != id
+  );
+  localStorage.recurrents = JSON.stringify(recurrents.value);
+}
+
+async function send(recurrent: any) {
+  await createCards(
+    recurrent.selectedsLists,
+    recurrent.cardName,
+    recurrent.selectedsLabels,
+    apiKey,
+    token
+  );
+  alert("Sucesso");
+}
 </script>
 
 <template>
+  <div class="row">
+    <Search @search="search" />
+  </div>
   <table class="highlight">
     <thead>
       <tr>
