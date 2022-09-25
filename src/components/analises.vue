@@ -14,8 +14,10 @@ onMounted(() => {
 });
 
 function remove(id: string) {
-  analises.value = analises.value.filter((analise: any) => analise.id != id);
-  localStorage.analises = JSON.stringify(analises.value);
+  if (confirm()) {
+    analises.value = analises.value.filter((analise: any) => analise.id != id);
+    localStorage.analises = JSON.stringify(analises.value);
+  }
 }
 
 function edit(id: string) {
@@ -44,11 +46,11 @@ function search() {}
     <tbody>
       <tr v-for="(analise, index) in analises" :key="index">
         <td>{{ analise.name }}</td>
-        <td @click="remove(analise.id)" class="remove">
-          <i class="material-icons">delete</i>
+        <td class="remove">
+          <i @click="remove(analise.id)" class="material-icons">delete</i>
         </td>
-        <td @click="edit(analise.id)" class="remove">
-          <i class="material-icons">edit</i>
+        <td class="remove">
+          <i @click="edit(analise.id)" class="material-icons">edit</i>
         </td>
       </tr>
     </tbody>
