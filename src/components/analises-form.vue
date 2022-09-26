@@ -3,12 +3,22 @@ import { uuid } from "@/utils";
 import { onMounted, ref } from "vue";
 import M from "materialize-css";
 import router from "@/router";
+import showdown from "showdown";
 
+var converter = new showdown.Converter();
 const analise = ref<any>(JSON.parse(localStorage.analise));
 
 onMounted(() => {
   M.AutoInit();
 });
+
+const analysisContentPre = ref("");
+const analysisContentPos = ref("");
+
+function setMarkDown() {
+  analysisContentPre.value = converter.makeHtml(analise.value.pre);
+  analysisContentPos.value = converter.makeHtml(analise.value.pos);
+}
 
 function submitForm() {
   if (analise.value.id) {
@@ -54,7 +64,7 @@ function cancel() {
   <form @submit="submitForm()">
     <div class="row">
       <div class="col s6">
-        <div class="row form-button">
+        <div class="row">
           <div class="col s12">
             <div class="input-field col s11">
               <input
@@ -68,7 +78,7 @@ function cancel() {
             </div>
           </div>
         </div>
-        <div class="row form-button">
+        <div class="row">
           <div class="col s12">
             <div class="input-field col s11">
               <textarea
@@ -76,12 +86,13 @@ function cancel() {
                 v-model="analise.pre"
                 class="materialize-textarea validate"
                 placeholder=" "
+                @keyup="setMarkDown()"
               ></textarea>
               <label for="obs" class="active">Pré-planejamento:</label>
             </div>
           </div>
         </div>
-        <div class="row form-button">
+        <div class="row">
           <div class="col s12">
             <div class="input-field col s11">
               <textarea
@@ -89,6 +100,7 @@ function cancel() {
                 v-model="analise.pos"
                 class="materialize-textarea validate"
                 placeholder=" "
+                @keyup="setMarkDown()"
               ></textarea>
               <label for="obs" class="active">Pós-planejamento:</label>
             </div>
@@ -108,6 +120,8 @@ function cancel() {
             <button class="waves-effect waves-light btn">Salvar</button>
           </div>
         </div>
+        <div class="row" v-html="analysisContentPre"></div>
+        <div class="row" v-html="analysisContentPos"></div>
       </div>
       <div class="col s6">
         <pre>
