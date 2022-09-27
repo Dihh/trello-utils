@@ -16,8 +16,17 @@ const analysisContentPre = ref("");
 const analysisContentPos = ref("");
 
 function setMarkDown() {
-  analysisContentPre.value = converter.makeHtml(analise.value.pre);
-  analysisContentPos.value = converter.makeHtml(analise.value.pos);
+  let preHtml = converter.makeHtml(analise.value.pre);
+  let posHtml = converter.makeHtml(analise.value.pos);
+  const checkbox = '<label><input type="checkbox" /><span></span></label>';
+  const checkboxChecked =
+    '<label><input type="checkbox" checked /><span></span></label>';
+  preHtml = preHtml.replace(/\[ \]/g, checkbox);
+  preHtml = preHtml.replace(/\[x\]/g, checkboxChecked);
+  posHtml = posHtml.replace(/\[ \]/g, checkbox);
+  posHtml = posHtml.replace(/\[x\]/g, checkboxChecked);
+  analysisContentPre.value = preHtml;
+  analysisContentPos.value = posHtml;
 }
 
 function submitForm() {
