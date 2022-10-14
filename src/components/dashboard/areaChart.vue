@@ -5,6 +5,7 @@ import { Chart, registerables } from "chart.js";
 const props = defineProps<{
   chartData: any;
   chartId: string;
+  title: string;
 }>();
 
 let chart: any = null;
@@ -56,7 +57,8 @@ function mountChart() {
 
 <template>
   <div class="row">
-    <div class="col s12">
+    <div class="col s12 center">
+      <h6>{{ title }}</h6>
       <canvas :id="chartId"></canvas>
     </div>
   </div>

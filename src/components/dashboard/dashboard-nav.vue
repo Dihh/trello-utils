@@ -15,9 +15,6 @@ function chageView(view: string) {
         <li class="tab">
           <a href="#test1" @click="chageView('dashboard')">Dashboard</a>
         </li>
-        <li class="tab">
-          <a href="#test2" @click="chageView('config')">Configuração</a>
-        </li>
       </ul>
     </div>
   </nav>

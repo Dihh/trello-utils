@@ -21,23 +21,49 @@ function remove(id: string) {
 }
 
 function edit(id: string) {
-  localStorage.analise = JSON.stringify(
-    analises.value.find((analise: any) => analise.id == id)
-  );
-  router.push({ path: "./analises-form" });
+  router.push({ path: `./analises-form/${id}` });
+}
+
+function activeAnalysis(id: string) {
+  if (confirm()) {
+    const analysisToDisableIndex = analises.value.findIndex(
+      (analise: any) => analise.status == "active"
+    );
+    if (analysisToDisableIndex >= 0) {
+      analises.value[analysisToDisableIndex].status = "open";
+    }
+    const analysis = analises.value.find((analise: any) => analise.id == id);
+    analysis.status = "active";
+    localStorage.analises = JSON.stringify(analises.value);
+  }
 }
 
 function search() {}
+
+function createAnalisys() {
+  router.push({ path: "./analises-form" });
+}
 </script>
 
 <template>
   <div class="row">
-    <Search @search="search" />
+    <div class="col s6">
+      <Search @search="search" />
+    </div>
+    <div class="col s6">
+      <button
+        class="waves-effect waves-light btn right"
+        @click="createAnalisys"
+      >
+        Criar análise
+      </button>
+    </div>
   </div>
   <table class="highlight">
     <thead>
       <tr>
         <th class="line-name">Nome</th>
+        <th></th>
         <th></th>
         <th></th>
       </tr>
@@ -46,11 +72,30 @@ function search() {}
     <tbody>
       <tr v-for="(analise, index) in analises" :key="index">
         <td>{{ analise.name }}</td>
-        <td class="remove">
-          <i @click="remove(analise.id)" class="material-icons">delete</i>
+        <td>
+          <i
+            v-if="analise.status !== 'active'"
+            @click="remove(analise.id)"
+            class="material-icons"
+            >delete</i
+          >
         </td>
-        <td class="remove">
+        <td>
           <i @click="edit(analise.id)" class="material-icons">edit</i>
+        </td>
+        <td>
+          <i
+            @click="activeAnalysis(analise.id)"
+            class="material-icons analysis-open"
+            v-if="analise.status == 'open'"
+            >check_circle</i
+          >
+          <i class="material-icons" v-if="analise.status == 'active'"
+            >check_circle</i
+          >
+          <i class="material-icons" v-if="analise.status == 'closed'"
+            >signal_cellular_no_sim</i
+          >
         </td>
       </tr>
     </tbody>
@@ -58,13 +103,16 @@ function search() {}
 </template>
 
 <style scoped>
+i {
+  cursor: pointer;
+}
 .line-name {
   width: 60%;
 }
 th {
   font-weight: bold;
 }
-.remove {
-  cursor: pointer;
+.analysis-open {
+  opacity: 0.6;
 }
 </style>

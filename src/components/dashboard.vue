@@ -3,7 +3,7 @@ import { onMounted, ref } from "vue";
 import M from "materialize-css";
 import router from "@/router";
 
-import { uuid } from "@/utils";
+import { uuid, weekDay } from "@/utils";
 import DashboardNav from "./dashboard/dashboard-nav.vue";
 import AreaChart from "./dashboard/areaChart.vue";
 import Config from "./dashboard/config.vue";
@@ -32,13 +32,20 @@ const finalDayString = ref("");
 const chartType = ref("quantity");
 const totalChartData = ref();
 const tasksChartData = ref();
+const activeAnalysis = ref();
+
 let cards: any = [];
 let dates: any = [];
+let systemAnalises: any = [];
 
 onMounted(() => {
   M.AutoInit();
   iintialDayString.value = localStorage.iintialDayString || "";
   finalDayString.value = localStorage.finalDayString || "";
+  systemAnalises = JSON.parse(localStorage.analises);
+  activeAnalysis.value = systemAnalises.find(
+    (analysis: any) => analysis.status == "active"
+  );
   getLists().then(() => {
     mountChart();
   });
@@ -98,6 +105,10 @@ async function updateDashboardData() {
     data: {},
   } as any;
 
+  const labelIndex: any = activeAnalysis.value.quantityJson.labels.findIndex(
+    (label: string) => label == updateChartData.date
+  );
+
   try {
     await getLists();
     await getCards();
@@ -112,7 +123,23 @@ async function updateDashboardData() {
         return aPoints + bPoints;
       }, 0);
       updateChartData.data[list.name] = { cardsNumber, points, labels };
+      if (activeAnalysis) {
+        const datasetIndex =
+          activeAnalysis.value.quantityJson.datasets.findIndex(
+            (dataset: any) => dataset.label == list.name
+          );
+
+        if (datasetIndex >= 0) {
+          activeAnalysis.value.quantityJson.datasets[datasetIndex].data[
+            labelIndex
+          ] = cardsNumber;
+          activeAnalysis.value.scoreJson.datasets[datasetIndex].data[
+            labelIndex
+          ] = points;
+        }
+      }
     });
+    localStorage.analises = JSON.stringify(systemAnalises);
     dashboardData[updateChartData.date] = updateChartData.data;
   } catch (e) {
     alert("Falha ao atualizado");
@@ -144,6 +171,7 @@ function getListLabelsData(listCards: any) {
   return labels;
 }
 
+// TODO: Voltar com gráfico sem rotina
 function getTaskChartData() {
   let chartDatas = localStorage.chartDatas || "{}";
   chartDatas = JSON.parse(chartDatas);
@@ -301,7 +329,7 @@ function saveView() {
           </div>
         </div>
       </div>
-      <div class="col s8 right-align">
+      <div class="col s9 right-align">
         <button
           class="waves-effect waves-light btn"
           @click="updateDashboardData"
@@ -309,36 +337,25 @@ function saveView() {
           Atualizar
         </button>
       </div>
-      <div class="col s1 right-align">
-        <button
-          class="waves-effect waves-light btn"
-          @click="saveView"
-          data-target="modal1"
-        >
-          Salvar
-        </button>
+    </div>
+    <div class="row" v-if="activeAnalysis">
+      <div class="col s6">
+        <AreaChart
+          @changeChartType="changeChartType"
+          :chartData="activeAnalysis.quantityJson"
+          :chartId="'areaChart'"
+          :title="'Total'"
+        />
+      </div>
+      <div class="col s6">
+        <AreaChart
+          @changeChartType="changeChartType"
+          :chartData="activeAnalysis.scoreJson"
+          :chartId="'areaChart1'"
+          :title="'Tarefas'"
+        />
       </div>
     </div>
-    <AreaChart
-      v-if="totalChartData"
-      @changeChartType="changeChartType"
-      :chartData="totalChartData"
-      :chartId="'areaChart'"
-    />
-    <div class="row"></div>
-    <AreaChart
-      v-if="totalChartData"
-      @changeChartType="changeChartType"
-      :chartData="tasksChartData"
-      :chartId="'areaChart1'"
-    />
-  </div>
-  <div v-if="view == 'config'">
-    <Config
-      @changeView="changeView"
-      :lists="lists"
-      :selectedLists="selectedLists"
-    />
   </div>
 </template>
 

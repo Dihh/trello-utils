@@ -7,8 +7,9 @@ import Recurrents from "@/views/Recurrents.vue";
 import Dashboard from "@/views/Dashboard.vue";
 import AnalisesVue from "@/views/Analises.vue";
 import AnalisesForm from "@/views/Analises-form.vue";
+import { publicPath } from "@/utils";
 
-const publicPath = "/trello-utils";
+
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -49,8 +50,13 @@ const router = createRouter({
       component: AnalisesVue,
     },
     {
-      path: `${publicPath}/analises-form`,
+      path: `${publicPath}/analises-form/:id`,
       name: "analises-form",
+      component: AnalisesForm,
+    },
+    {
+      path: `${publicPath}/analises-form`,
+      name: "update-analises-form",
       component: AnalisesForm,
     },
   ],

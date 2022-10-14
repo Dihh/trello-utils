@@ -1,4 +1,5 @@
 <script setup lang="ts">
+// TODO:Apagar componente
 import { onMounted, ref } from "vue";
 import M from "materialize-css";
 
@@ -29,7 +30,7 @@ function changeDate() {
 </script>
 
 <template>
-  <div class="row">
+  <!-- <div class="row">
     <div class="col s3">
       <div class="input-field col s11">
         <input id="initialDate" type="date" v-model="iintialDay" />
@@ -60,7 +61,7 @@ function changeDate() {
         </div>
       </div>
     </div>
-  </div>
+  </div> -->
   <div class="row top-2">
     <div class="col s12">
       <button class="waves-effect waves-light btn" @click="changeDate">
