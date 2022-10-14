@@ -93,6 +93,15 @@ function setAnaliseCharts(analise: any) {
       fill: index == 0 ? "start" : "-1",
     })),
   };
+  analise.value.taskQuantity = {
+    labels: analise.value.labels,
+    datasets: analise.value.dataLabels.map((label: string, index: number) => ({
+      label,
+      data: analise.value.labels.map(() => null),
+      backgroundColor: labelColors[label] || "rgba(255, 255, 255, 0.2)",
+      fill: index == 0 ? "start" : "-1",
+    })),
+  };
   return analise;
 }
 

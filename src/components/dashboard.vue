@@ -7,6 +7,7 @@ import { uuid, weekDay } from "@/utils";
 import DashboardNav from "./dashboard/dashboard-nav.vue";
 import AreaChart from "./dashboard/areaChart.vue";
 import Config from "./dashboard/config.vue";
+import showdown from "showdown";
 
 const colors = [
   "rgba(255, 99, 132, 0.2)",
@@ -33,6 +34,10 @@ const chartType = ref("quantity");
 const totalChartData = ref();
 const tasksChartData = ref();
 const activeAnalysis = ref();
+let analysisContentPre = ref();
+let analysisContentPos = ref();
+
+var converter = new showdown.Converter();
 
 let cards: any = [];
 let dates: any = [];
@@ -46,6 +51,7 @@ onMounted(() => {
   activeAnalysis.value = systemAnalises.find(
     (analysis: any) => analysis.status == "active"
   );
+  setMarkDown();
   getLists().then(() => {
     mountChart();
   });
@@ -117,6 +123,11 @@ async function updateDashboardData() {
       const listCards = cards.filter((card: any) => card.idList == list.id);
       const labels = getListLabelsData(listCards);
       const cardsNumber = listCards.length;
+      const cardsTasksNumber = listCards.filter((card: any) => {
+        return !card.labels.find(
+          (cardLabel: any) => cardLabel.name == "Rotina"
+        );
+      }).length;
       const points = listCards.reduce((a: any, b: any) => {
         const aPoints = a.points || a;
         const bPoints = b.points;
@@ -133,6 +144,9 @@ async function updateDashboardData() {
           activeAnalysis.value.quantityJson.datasets[datasetIndex].data[
             labelIndex
           ] = cardsNumber;
+          activeAnalysis.value.taskQuantity.datasets[datasetIndex].data[
+            labelIndex
+          ] = cardsTasksNumber;
           activeAnalysis.value.scoreJson.datasets[datasetIndex].data[
             labelIndex
           ] = points;
@@ -294,6 +308,20 @@ function saveView() {
   localStorage.analise = JSON.stringify(analise);
   router.push({ path: "./analises-form" });
 }
+
+function setMarkDown() {
+  let preHtml = converter.makeHtml(activeAnalysis.value.pre) || "";
+  let posHtml = converter.makeHtml(activeAnalysis.value.pos) || "";
+  const checkbox = '<label><input type="checkbox" /><span></span></label>';
+  const checkboxChecked =
+    '<label><input type="checkbox" checked /><span></span></label>';
+  preHtml = preHtml.replace(/\[ \]/g, checkbox);
+  preHtml = preHtml.replace(/\[x\]/g, checkboxChecked);
+  posHtml = posHtml.replace(/\[ \]/g, checkbox);
+  posHtml = posHtml.replace(/\[x\]/g, checkboxChecked);
+  analysisContentPre.value = preHtml;
+  analysisContentPos.value = posHtml;
+}
 </script>
 
 <template>
@@ -342,7 +370,11 @@ function saveView() {
       <div class="col s6">
         <AreaChart
           @changeChartType="changeChartType"
-          :chartData="activeAnalysis.quantityJson"
+          :chartData="
+            chartType == 'quantity'
+              ? activeAnalysis.quantityJson
+              : activeAnalysis.scoreJson
+          "
           :chartId="'areaChart'"
           :title="'Total'"
         />
@@ -350,11 +382,15 @@ function saveView() {
       <div class="col s6">
         <AreaChart
           @changeChartType="changeChartType"
-          :chartData="activeAnalysis.scoreJson"
+          :chartData="activeAnalysis.taskQuantity"
           :chartId="'areaChart1'"
           :title="'Tarefas'"
         />
       </div>
+    </div>
+    <div class="row" v-if="activeAnalysis">
+      <div class="col s6" v-html="analysisContentPre"></div>
+      <div class="col s6" v-html="analysisContentPos"></div>
     </div>
   </div>
 </template>
