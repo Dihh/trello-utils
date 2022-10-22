@@ -1,36 +1,33 @@
 <script setup lang="ts">
 import Search from "@/components/shared/search.vue";
+import router from "@/router";
 
 import { createCards } from "@/utils";
 import M from "materialize-css";
 import { onMounted, ref } from "vue";
 
-const recurrents = ref<any>([]);
+const cards = ref<any>([]);
 const apiKey = localStorage.apiKey;
 const token = localStorage.token;
 
 onMounted(() => {
   M.AutoInit();
-  const systemRecurrents = localStorage.recurrents || "[]";
-  recurrents.value = JSON.parse(systemRecurrents);
+  const systemCards = localStorage.cards || "[]";
+  cards.value = JSON.parse(systemCards);
 });
 
 function remove(id: string) {
-  recurrents.value = recurrents.value.filter(
-    (recurrent: any) => recurrent.id != id
-  );
-  localStorage.recurrents = JSON.stringify(recurrents.value);
+  cards.value = cards.value.filter((card: any) => card.id != id);
+  localStorage.cards = JSON.stringify(cards.value);
 }
 
-async function send(recurrent: any) {
-  await createCards(
-    recurrent.selectedsLists,
-    recurrent.cardName,
-    recurrent.selectedsLabels,
-    apiKey,
-    token
-  );
+async function send(card: any) {
+  await createCards(card.lists, card.name, card.labels, apiKey, token);
   alert("Sucesso");
+}
+
+function goTo(id: string) {
+  router.push({ path: `./create-cards/${id}` });
 }
 
 function search() {}
@@ -52,33 +49,27 @@ function search() {}
     </thead>
 
     <tbody>
-      <tr v-for="(recurrent, index) in recurrents" :key="index">
-        <td>{{ recurrent.cardName }}</td>
+      <tr v-for="(card, index) in cards" :key="index">
+        <td class="click" @click="goTo(card.id)">{{ card.name }}</td>
         <td>
           <ul>
-            <li
-              v-for="(list, listIndex) in recurrent.selectedsLists"
-              :key="listIndex"
-            >
+            <li v-for="(list, listIndex) in card.lists" :key="listIndex">
               {{ list.name }}
             </li>
           </ul>
         </td>
         <td>
           <ul>
-            <li
-              v-for="(label, labelIndex) in recurrent.selectedsLabels"
-              :key="labelIndex"
-            >
+            <li v-for="(label, labelIndex) in card.labels" :key="labelIndex">
               {{ label.name }}
             </li>
           </ul>
         </td>
-        <td @click="remove(recurrent.id)" class="remove">
-          <i class="material-icons">delete</i>
+        <td>
+          <i @click="remove(card.id)" class="material-icons click">delete</i>
         </td>
-        <td @click="send(recurrent)" class="remove">
-          <i class="material-icons">send</i>
+        <td>
+          <i @click="send(card)" class="material-icons click">send</i>
         </td>
       </tr>
     </tbody>
@@ -92,7 +83,7 @@ function search() {}
 th {
   font-weight: bold;
 }
-.remove {
+.click {
   cursor: pointer;
 }
 </style>

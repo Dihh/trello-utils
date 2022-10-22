@@ -1,31 +1,54 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
-import { uuid, createCards } from "../utils";
+import { uuid, publicPath } from "../utils";
 import Search from "@/components/shared/search.vue";
+import { useRoute } from "vue-router";
+import router from "@/router";
 
 const labels = ref<any>([]);
 const listsFiltered = ref<any>([]);
-const selectedsCheckbox = ref<any>([]);
-const labelsSelecteds = ref<any>([]);
-const selectedsLists = ref<any>([]);
-const cardName = ref<any>("");
-const selectedsLabels = ref<any>([]);
+const card = ref<any>({
+  lists: [],
+  labels: [],
+  name: "",
+});
+
 let lists: any = [];
 const board = localStorage.board;
 const apiKey = localStorage.apiKey;
 const token = localStorage.token;
 const searchValue = "";
 
+const route = useRoute();
+const id = route.params.id;
+
+const systemCards = localStorage.cards || "[]";
+const cards = JSON.parse(systemCards);
+
 onMounted(() => {
   getLists();
   getLabels();
+  M.AutoInit();
+  if (id && typeof id == "string") {
+    getCard(id);
+  }
 });
+
+function getCard(id: string) {
+  const systemCard = cards.find((card: any) => card.id == id);
+  if (systemCard) {
+    card.value = systemCard;
+  }
+}
 
 async function getLists() {
   const resp = await fetch(
     `https://api.trello.com/1/boards/${board}/lists?key=${apiKey}&token=${token}`
   );
-  lists = await resp.json();
+  lists = (await resp.json()).map((list: any) => ({
+    name: list.name,
+    id: list.id,
+  }));
   filter();
 }
 
@@ -33,7 +56,10 @@ async function getLabels() {
   const resp = await fetch(
     `https://api.trello.com/1/boards/${board}/labels?key=${apiKey}&token=${token}`
   );
-  labels.value = await resp.json();
+  labels.value = (await resp.json()).map((label: any) => ({
+    name: label.name,
+    id: label.id,
+  }));
 }
 
 function search(search: string) {
@@ -55,49 +81,16 @@ function filter(search = "") {
   });
 }
 
-function select() {
-  const selecteds: string[] = selectedsCheckbox.value.map(
-    (element: any) => element
-  );
-  const _selectedsLabels: string[] = labelsSelecteds.value.map(
-    (element: any) => element
-  );
-  selectedsLists.value = lists.filter((card: any) =>
-    selecteds.includes(card.id)
-  );
-  selectedsLabels.value = labels.value.filter((label: any) =>
-    _selectedsLabels.includes(label.id)
-  );
-}
-
-async function send() {
-  event?.preventDefault();
-  await createCards(
-    selectedsLists.value,
-    cardName.value,
-    selectedsLabels.value,
-    apiKey,
-    token
-  );
-  alert("Sucesso");
-  cardName.value = "";
-}
-
 function saveRecurrents() {
-  const systemRecurrents = localStorage.recurrents || "[]";
-  const recurrents = JSON.parse(systemRecurrents);
-  const recurrent = {
-    id: uuid(),
-    selectedsLists: selectedsLists.value,
-    cardName: cardName.value,
-    selectedsLabels: selectedsLabels.value,
-  };
-  if (recurrent.cardName) {
-    recurrents.push(recurrent);
-    localStorage.recurrents = JSON.stringify(recurrents);
-    alert("Salvo");
-    document.querySelector("form")?.reset();
+  if (id) {
+    localStorage.cards = JSON.stringify(cards);
+  } else {
+    card.value.id = uuid();
+    cards.push(card.value);
+    localStorage.cards = JSON.stringify(cards);
   }
+  alert("Salvo");
+  router.push({ path: `${publicPath}/recurrents` });
 }
 </script>
 
@@ -105,11 +98,11 @@ function saveRecurrents() {
   <div class="row">
     <Search @search="search" />
   </div>
-  <form @submit="send()">
+  <form>
     <div class="row">
       <div class="col s12">
         <div class="row">
-          <div class="col s7 lists">
+          <div class="col s5 lists">
             <div
               class="row"
               v-for="(list, index) in listsFiltered"
@@ -119,39 +112,35 @@ function saveRecurrents() {
                 <label>
                   <input
                     type="checkbox"
-                    :value="list.id"
-                    v-model="selectedsCheckbox"
-                    @change="select"
+                    :value="list"
+                    v-model="card.lists"
+                    @change="selectList"
                   />
                   <span>{{ list.name }}</span>
                 </label>
               </div>
             </div>
           </div>
-          <div class="col s5">
-            <div v-for="list in selectedsLists" :key="list.id">
-              {{ list.name }}
-            </div>
-          </div>
-        </div>
-        <div class="row">
-          <div class="col s7 labels">
+
+          <div class="col s5 offset-s1 labels">
             <div class="row" v-for="(label, index) in labels" :key="index">
               <div class="col s12">
                 <label>
-                  <input
-                    type="checkbox"
-                    :value="label.id"
-                    v-model="labelsSelecteds"
-                    @change="select"
-                  />
+                  <input type="checkbox" :value="label" v-model="card.labels" />
                   <span>{{ label.name }}</span>
                 </label>
               </div>
             </div>
           </div>
-          <div class="col s5">
-            <div v-for="label in selectedsLabels" :key="label.id">
+        </div>
+        <div class="row">
+          <div class="col s6">
+            <div v-for="list in card.lists" :key="list.id">
+              {{ list.name }}
+            </div>
+          </div>
+          <div class="col s6">
+            <div v-for="label in card.labels" :key="label.id">
               {{ label.name }}
             </div>
           </div>
@@ -159,12 +148,9 @@ function saveRecurrents() {
       </div>
     </div>
     <div class="row form-button">
-      <div class="col s10">
-        <input v-model="cardName" id="cardName" type="text" required />
+      <div class="col s11">
+        <input v-model="card.name" id="cardName" type="text" required />
         <label for="cardName"></label>
-      </div>
-      <div class="col s1">
-        <button class="waves-effect waves-light btn">Enviar</button>
       </div>
       <div class="col s1">
         <button
@@ -194,10 +180,10 @@ function saveRecurrents() {
   border-radius: 9px;
 }
 .labels {
-  max-height: 25vh;
+  max-height: 30vh;
   overflow-y: auto;
   overflow-x: hidden;
-  border: solid 1px #aaa;
+  border: solid 1px rgba(170, 170, 170, 0.885);
   padding: 20px 10px 20px 20px !important;
   border-radius: 9px;
 }

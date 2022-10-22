@@ -40,6 +40,11 @@ const router = createRouter({
       component: CreateCards,
     },
     {
+      path: `${publicPath}/create-cards/:id`,
+      name: "edit-cards",
+      component: CreateCards,
+    },
+    {
       path: `${publicPath}/recurrents`,
       name: "recurrents-cards",
       component: Recurrents,
