@@ -110,12 +110,7 @@ function saveRecurrents() {
             >
               <div class="col s12">
                 <label>
-                  <input
-                    type="checkbox"
-                    :value="list"
-                    v-model="card.lists"
-                    @change="selectList"
-                  />
+                  <input type="checkbox" :value="list" v-model="card.lists" />
                   <span>{{ list.name }}</span>
                 </label>
               </div>
