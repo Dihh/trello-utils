@@ -7,6 +7,7 @@ import M from "materialize-css";
 import { onMounted, ref } from "vue";
 
 const cards = ref<any>([]);
+const loading = ref(false);
 const apiKey = localStorage.apiKey;
 const token = localStorage.token;
 
@@ -31,6 +32,17 @@ function goTo(id: string) {
 }
 
 function search() {}
+
+async function createAll() {
+  loading.value = true;
+  await Promise.all(
+    cards.value.map(async (card: any) => {
+      await createCards(card.lists, card.name, card.labels, apiKey, token);
+    })
+  );
+  alert("Cards criados");
+  loading.value = false;
+}
 </script>
 
 <template>
@@ -74,6 +86,20 @@ function search() {}
       </tr>
     </tbody>
   </table>
+  <br />
+  <div class="row">
+    <div class="col s12 right-align">
+      <button
+        @click="createAll"
+        class="waves-effect waves-light btn loading-btn"
+      >
+        <div>
+          <span v-if="!loading">Criar todos</span>
+          <div v-else class="button-loader"></div>
+        </div>
+      </button>
+    </div>
+  </div>
 </template>
 
 <style scoped>
@@ -85,5 +111,11 @@ th {
 }
 .click {
   cursor: pointer;
+}
+.loading-btn > div {
+  width: 100px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 </style>
