@@ -123,12 +123,18 @@ async function updateDashboardData() {
       const listCards = cards.filter((card: any) => card.idList == list.id);
       const labels = getListLabelsData(listCards);
       const cardsNumber = listCards.length;
-      const cardsTasksNumber = listCards.filter((card: any) => {
+      const cardsTasks = listCards.filter((card: any) => {
         return !card.labels.find(
           (cardLabel: any) => cardLabel.name == "Rotina"
         );
-      }).length;
+      });
+      const cardsTasksNumber = cardsTasks.length;
       const points = listCards.reduce((a: any, b: any) => {
+        const aPoints = a.points || a;
+        const bPoints = b.points;
+        return aPoints + bPoints;
+      }, 0);
+      const cardTaskPoints = cardsTasks.reduce((a: any, b: any) => {
         const aPoints = a.points || a;
         const bPoints = b.points;
         return aPoints + bPoints;
@@ -150,6 +156,9 @@ async function updateDashboardData() {
           activeAnalysis.value.scoreJson.datasets[datasetIndex].data[
             labelIndex
           ] = points;
+          activeAnalysis.value.taskScore.datasets[datasetIndex].data[
+            labelIndex
+          ] = cardTaskPoints;
         }
       }
     });
@@ -301,14 +310,6 @@ async function changeChartType() {
   tasksChartData.value = getTaskChartData();
 }
 
-function saveView() {
-  const analise: any = {};
-  analise.quantityJson = JSON.stringify(getTotalChartData("quantity"), null, 2);
-  analise.scoreJson = JSON.stringify(getTotalChartData("score"), null, 2);
-  localStorage.analise = JSON.stringify(analise);
-  router.push({ path: "./analises-form" });
-}
-
 function setMarkDown() {
   let preHtml = converter.makeHtml(activeAnalysis.value.pre) || "";
   let posHtml = converter.makeHtml(activeAnalysis.value.pos) || "";
@@ -382,7 +383,11 @@ function setMarkDown() {
       <div class="col s6">
         <AreaChart
           @changeChartType="changeChartType"
-          :chartData="activeAnalysis.taskQuantity"
+          :chartData="
+            chartType == 'quantity'
+              ? activeAnalysis.taskQuantity
+              : activeAnalysis.taskScore
+          "
           :chartId="'areaChart1'"
           :title="'Tarefas'"
         />
