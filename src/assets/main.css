@@ -12,6 +12,10 @@ a,
   transition: 0.4s;
 }
 
+.left-10{
+  margin-left: 10px;
+}
+
 @media (hover: hover) {
   a:hover {
     background-color: hsla(160, 100%, 37%, 0.2);

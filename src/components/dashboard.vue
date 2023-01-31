@@ -92,20 +92,20 @@ function getDates() {
   }
 }
 
-async function updateDashboardData() {
+async function updateDashboardData(date: any = null) {
   let dashboardData = localStorage.chartDatas || "{}";
   dashboardData = JSON.parse(dashboardData);
-
-  const today = new Date();
-  const date = new Date(
-    Date.UTC(today.getFullYear(), today.getMonth(), today.getDate())
-  )
-    .toISOString()
-    .split("T")[0]
-    .split("-")
-    .reverse()
-    .join("/");
-
+  if (!date) {
+    const today = new Date();
+    date = new Date(
+      Date.UTC(today.getFullYear(), today.getMonth(), today.getDate())
+    )
+      .toISOString()
+      .split("T")[0]
+      .split("-")
+      .reverse()
+      .join("/");
+  }
   const updateChartData = {
     date,
     data: {},
@@ -361,10 +361,24 @@ function setMarkDown() {
       <div class="col s9 right-align">
         <button
           class="waves-effect waves-light btn"
-          @click="updateDashboardData"
+          @click="updateDashboardData(null)"
         >
           Atualizar
         </button>
+        <a
+          class="dropdown-trigger btn left-10"
+          href="#"
+          data-target="dropdown1"
+        >
+          <i class="material-icons">arrow_drop_down</i>
+        </a>
+        <ul id="dropdown1" class="dropdown-content">
+          <template v-if="activeAnalysis">
+            <li v-for="label in activeAnalysis.labels" :key="label">
+              <a href="#" @click="updateDashboardData(label)">{{ label }}</a>
+            </li>
+          </template>
+        </ul>
       </div>
     </div>
     <div class="row" v-if="activeAnalysis">
