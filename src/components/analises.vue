@@ -9,14 +9,23 @@ const analises = ref([]) as any;
 
 onMounted(() => {
   M.AutoInit();
-  const systemSavedsAnalises = localStorage.analises || "[]";
-  analises.value = JSON.parse(systemSavedsAnalises);
+  getAnalises();
 });
 
-function remove(id: string) {
+async function getAnalises() {
+  analises.value = await (
+    await fetch(
+      `http://localhost:3000/users/${localStorage.apiKey}/boards/${localStorage.board}/analyses`
+    )
+  ).json();
+}
+
+async function remove(id: string) {
   if (confirm()) {
-    analises.value = analises.value.filter((analise: any) => analise.id != id);
-    localStorage.analises = JSON.stringify(analises.value);
+    await fetch(`http://localhost:3000/analyses/${id}`, {
+      method: "DELETE",
+    });
+    location.reload();
   }
 }
 
@@ -24,17 +33,15 @@ function edit(id: string) {
   router.push({ path: `./analises-form/${id}` });
 }
 
-function activeAnalysis(id: string) {
+async function activeAnalysis(id: string) {
   if (confirm()) {
-    const analysisToDisableIndex = analises.value.findIndex(
-      (analise: any) => analise.status == "active"
+    await fetch(
+      `http://localhost:3000/users/${localStorage.apiKey}/boards/${localStorage.board}/analyses/${id}/active`,
+      {
+        method: "POST",
+      }
     );
-    if (analysisToDisableIndex >= 0) {
-      analises.value[analysisToDisableIndex].status = "open";
-    }
-    const analysis = analises.value.find((analise: any) => analise.id == id);
-    analysis.status = "active";
-    localStorage.analises = JSON.stringify(analises.value);
+    location.reload();
   }
 }
 

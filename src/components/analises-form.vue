@@ -17,26 +17,26 @@ const token = localStorage.token;
 const route = useRoute();
 const id = route.params.id;
 const systemSavedsAnalises = localStorage.analises || "[]";
-const analises = JSON.parse(systemSavedsAnalises);
 
 onMounted(() => {
   M.AutoInit();
   getLists();
-  if (id) {
-    getAnalysis();
+  if (id && typeof id == "string") {
+    getAnalysis(Number.parseInt(id));
   }
 });
 
-function getAnalysis() {
-  analise.value = analises.find((analysis: any) => analysis.id == id);
+async function getAnalysis(id: number) {
+  analise.value = await (
+    await fetch(`http://localhost:3000/analyses/${id}`)
+  ).json();
 }
 
 async function getLists() {
   try {
-    const resp = await fetch(
-      `https://api.trello.com/1/boards/${board}/lists?key=${apiKey}&token=${token}`
-    );
-    lists.value = await resp.json();
+    const resp = await fetch(`http://localhost:3000/boards/${board}`);
+    const json = await resp.json();
+    lists.value = json["lists"];
   } catch (e) {
     lists.value = JSON.parse(localStorage.lists);
   }
@@ -46,8 +46,8 @@ const analysisContentPre = ref("");
 const analysisContentPos = ref("");
 
 function setMarkDown() {
-  let preHtml = converter.makeHtml(analise.value.pre) || "";
-  let posHtml = converter.makeHtml(analise.value.pos) || "";
+  let preHtml = converter.makeHtml(analise.value.pre_planning) || "";
+  let posHtml = converter.makeHtml(analise.value.pos_planning) || "";
   const checkbox = '<label><input type="checkbox" /><span></span></label>';
   const checkboxChecked =
     '<label><input type="checkbox" checked /><span></span></label>';
@@ -62,19 +62,32 @@ function setMarkDown() {
 function submitForm() {
   event?.preventDefault();
   if (analise.value.id) {
-    updateForm();
+    updateForm(analise.value.id);
   } else {
     saveAnalise();
   }
 }
 
-function updateForm() {
-  localStorage.analises = JSON.stringify(analises);
+async function updateForm(id: number) {
+  await fetch(`http://localhost:3000/analyses/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify({
+      analysis: {
+        name: analise.value.name,
+        pre_planning: analise.value.pre_planning,
+        pos_planning: analise.value.pos_planning,
+      },
+    }),
+    headers: {
+      "content-type": "application/json",
+    },
+  });
   alert("Salvo");
   router.push({ path: `${publicPath}/analises` });
 }
 
 function setAnaliseCharts(analise: any) {
+  return;
   analise.value.quantityJson = {
     labels: analise.value.labels,
     datasets: analise.value.dataLabels.map((label: string, index: number) => ({
@@ -114,12 +127,24 @@ function setAnaliseCharts(analise: any) {
   return analise;
 }
 
-function saveAnalise() {
-  analise.value.id = uuid();
-  analise.value.status = "open";
-  setAnaliseCharts(analise);
-  analises.push(analise.value);
-  localStorage.analises = JSON.stringify(analises);
+async function saveAnalise() {
+  await fetch(`http://localhost:3000/analyses`, {
+    method: "POST",
+    body: JSON.stringify({
+      lists: analise.value.dataLabels,
+      board_id: board,
+      analysis: {
+        name: analise.value.name,
+        pre_planning: analise.value.pre_planning,
+        pos_planning: analise.value.pos_planning,
+        start_date: analise.value.start_date,
+        end_date: analise.value.end_date,
+      },
+    }),
+    headers: {
+      "content-type": "application/json",
+    },
+  });
   alert("Salvo");
   router.push({ path: `${publicPath}/analises` });
 }
@@ -129,10 +154,10 @@ function cancel() {
 }
 
 function changeLabels() {
-  if (analise.value.intialDay && analise.value.finalDay) {
+  if (analise.value.start_date && analise.value.end_date) {
     const dates = [];
-    const datesIntialDayString = analise.value.intialDay.split("-");
-    const datesFinalDayString = analise.value.finalDay.split("-");
+    const datesIntialDayString = analise.value.start_date.split("-");
+    const datesFinalDayString = analise.value.end_date.split("-");
 
     const startDate = new Date(
       Date.UTC(
@@ -190,7 +215,7 @@ function changeLabels() {
             <div class="input-field col s11">
               <textarea
                 id="obs"
-                v-model="analise.pre"
+                v-model="analise.pre_planning"
                 class="materialize-textarea validate"
                 placeholder=" "
                 @keyup="setMarkDown()"
@@ -204,7 +229,7 @@ function changeLabels() {
             <div class="input-field col s11">
               <textarea
                 id="obs"
-                v-model="analise.pos"
+                v-model="analise.pos_planning"
                 class="materialize-textarea validate"
                 placeholder=" "
                 @keyup="setMarkDown()"
@@ -220,7 +245,7 @@ function changeLabels() {
                 id="initialDate"
                 type="date"
                 @change="changeLabels"
-                v-model="analise.intialDay"
+                v-model="analise.start_date"
                 :disabled="!!id"
               />
               <label for="initialDate">Data início</label>
@@ -232,7 +257,7 @@ function changeLabels() {
                 id="initialDate"
                 type="date"
                 @change="changeLabels"
-                v-model="analise.finalDay"
+                v-model="analise.end_date"
                 :disabled="!!id"
               />
               <label for="initialDate">Data fim</label>
@@ -247,7 +272,7 @@ function changeLabels() {
                   <label>
                     <input
                       type="checkbox"
-                      :value="list.name"
+                      :value="list.id"
                       v-model="analise.dataLabels"
                       :disabled="!!id"
                     />

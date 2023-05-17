@@ -118,4 +118,8 @@ nav a:first-of-type {
     transform: rotate(360deg);
   }
 }
+
+select {
+  display: block !important;
+}
 </style>

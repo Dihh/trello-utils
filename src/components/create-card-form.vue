@@ -34,32 +34,27 @@ onMounted(() => {
   }
 });
 
-function getCard(id: string) {
-  const systemCard = cards.find((card: any) => card.id == id);
-  if (systemCard) {
-    card.value = systemCard;
-  }
+async function getCard(id: string) {
+  card.value = await (
+    await fetch(`http://localhost:3000/recurrent_cards/${id}`)
+  ).json();
+  card.value.lists = card.value.card_lists.map((el: any) => el.id);
+  card.value.labels = card.value.card_labels.map((el: any) => el.id);
 }
 
 async function getLists() {
   const resp = await fetch(
-    `https://api.trello.com/1/boards/${board}/lists?key=${apiKey}&token=${token}`
+    `http://localhost:3000/users/${localStorage.apiKey}/boards/${localStorage.board}/lists`
   );
-  lists = (await resp.json()).map((list: any) => ({
-    name: list.name,
-    id: list.id,
-  }));
+  lists = await resp.json();
   filter();
 }
 
 async function getLabels() {
   const resp = await fetch(
-    `https://api.trello.com/1/boards/${board}/labels?key=${apiKey}&token=${token}`
+    `http://localhost:3000/users/${localStorage.apiKey}/boards/${localStorage.board}/labels`
   );
-  labels.value = (await resp.json()).map((label: any) => ({
-    name: label.name,
-    id: label.id,
-  }));
+  labels.value = await resp.json();
 }
 
 function search(search: string) {
@@ -81,13 +76,37 @@ function filter(search = "") {
   });
 }
 
-function saveRecurrents() {
+async function saveRecurrents() {
   if (id) {
-    localStorage.cards = JSON.stringify(cards);
+    await fetch(`http://localhost:3000/recurrent_cards/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        recurrent_card: {
+          name: card.value.name,
+          board_id: localStorage.board,
+        },
+        lists: card.value.lists,
+        labels: card.value.labels,
+      }),
+      headers: {
+        "content-type": "application/json",
+      },
+    });
   } else {
-    card.value.id = uuid();
-    cards.push(card.value);
-    localStorage.cards = JSON.stringify(cards);
+    await fetch(`http://localhost:3000/recurrent_cards/`, {
+      method: "POST",
+      body: JSON.stringify({
+        recurrent_card: {
+          name: card.value.name,
+          board_id: localStorage.board,
+        },
+        lists: card.value.lists,
+        labels: card.value.labels,
+      }),
+      headers: {
+        "content-type": "application/json",
+      },
+    });
   }
   alert("Salvo");
   router.push({ path: `${publicPath}/recurrents` });
@@ -110,7 +129,11 @@ function saveRecurrents() {
             >
               <div class="col s12">
                 <label>
-                  <input type="checkbox" :value="list" v-model="card.lists" />
+                  <input
+                    type="checkbox"
+                    :value="list.id"
+                    v-model="card.lists"
+                  />
                   <span>{{ list.name }}</span>
                 </label>
               </div>
@@ -121,7 +144,11 @@ function saveRecurrents() {
             <div class="row" v-for="(label, index) in labels" :key="index">
               <div class="col s12">
                 <label>
-                  <input type="checkbox" :value="label" v-model="card.labels" />
+                  <input
+                    type="checkbox"
+                    :value="label.id"
+                    v-model="card.labels"
+                  />
                   <span>{{ label.name }}</span>
                 </label>
               </div>
